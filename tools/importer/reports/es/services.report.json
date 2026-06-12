@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/es/services",
+  "path": "es/services",
+  "timestamp": "2026-06-12T20:21:57.157Z",
+  "title": "Servicios",
+  "template": "hero-landing",
+  "blocks": [
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

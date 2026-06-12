@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/staying-well",
+  "path": "staying-well",
+  "timestamp": "2026-06-12T20:23:09.983Z",
+  "title": "Ayúdame a estar bien | Banner Health",
+  "template": "section-landing-hero-cards",
+  "blocks": [
+    "hero",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

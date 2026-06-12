@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/health-professionals",
+  "path": "health-professionals",
+  "timestamp": "2026-06-12T20:22:58.958Z",
+  "title": "Para Profesionales de la Salud",
+  "template": "section-landing-hero-cards",
+  "blocks": [
+    "hero",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

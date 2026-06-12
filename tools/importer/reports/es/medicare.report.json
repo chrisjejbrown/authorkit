@@ -1,0 +1,16 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/es/medicare",
+  "path": "es/medicare",
+  "timestamp": "2026-06-12T20:24:24.934Z",
+  "title": "Banner Medicare",
+  "template": "service-detail-cards-carousel",
+  "blocks": [
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

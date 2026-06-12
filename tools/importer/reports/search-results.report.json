@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/search-results",
+  "path": "search-results",
+  "timestamp": "2026-06-12T20:09:01.982Z",
+  "title": "Banner Health Search Results | Banner Health",
+  "template": "search-results",
+  "blocks": [
+    "search"
+  ]
+}

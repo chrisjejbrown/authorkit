@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/networksouth",
+  "path": "networksouth",
+  "timestamp": "2026-06-12T20:24:07.134Z",
+  "title": "Banner Network Southern Arizona",
+  "template": "search-listing",
+  "blocks": [
+    "cards-feature",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

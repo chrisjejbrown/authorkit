@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/",
+  "path": "index",
+  "timestamp": "2026-06-12T20:22:16.298Z",
+  "title": "Banner Health | Health Care Made Easier in AZ, CO, WY, NE, NV, CA",
+  "template": "homepage",
+  "blocks": [
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature",
+    "cards-feature"
+  ]
+}

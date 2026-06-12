@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "url": "https://www.bannerhealth.com/es/locations",
+  "path": "es/locations",
+  "timestamp": "2026-06-12T20:23:47.637Z",
+  "title": "Nuestras Ubicaciones | Banner Health",
+  "template": "search-listing",
+  "blocks": [
+    "search"
+  ]
+}
