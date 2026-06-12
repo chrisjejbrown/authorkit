@@ -1,0 +1,40 @@
+{
+  "variantName": "cards-feature",
+  "baseBlock": "cards",
+  "version": "1.0.0",
+  "created": "2026-06-12T00:00:00.000Z",
+  "sourceContext": {
+    "originUrl": "https://www.bannerhealth.com/",
+    "originPage": "Banner Health homepage",
+    "blockPosition": "full-page (stacked card grids comprise the entire page)"
+  },
+  "visualCharacteristics": {
+    "colorScheme": "light",
+    "density": "spacious",
+    "purpose": "feature",
+    "imagePattern": "icon"
+  },
+  "contentPattern": {
+    "structure": "icon/image + heading + description + CTA (repeating grid items and single promo cards)",
+    "buttonCount": 1,
+    "imageCount": 1
+  },
+  "reuseGuidance": {
+    "suitableFor": [
+      "service/feature grids with icons and 'learn more' links",
+      "stacked promotional cards with image + heading + text + CTA",
+      "healthcare landing pages composed of card grids",
+      "homepage and section landing pages without a hero"
+    ],
+    "notSuitableFor": [
+      "interactive components (tabs, accordions, carousels)",
+      "side-by-side comparison layouts (use columns)",
+      "full-bleed background-image hero banners"
+    ]
+  },
+  "usage": {
+    "pagesUsing": ["/index", "/about", "/services", "/es/medicare", "/es/healthcareblog"],
+    "reuseCount": 5,
+    "lastUsed": "2026-06-12T20:02:00.000Z"
+  }
+}

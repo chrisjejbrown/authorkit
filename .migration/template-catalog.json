@@ -1,0 +1,192 @@
+{
+  "templates": [
+    {
+      "name": "homepage",
+      "representativePages": [
+        "https://www.bannerhealth.com/"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/"
+      ],
+      "description": "Top-level landing page composed entirely of stacked card grids (no hero)"
+    },
+    {
+      "name": "section-landing-hero-cards",
+      "representativePages": [
+        "https://www.bannerhealth.com/about",
+        "https://www.bannerhealth.com/employees",
+        "https://www.bannerhealth.com/getcarenow",
+        "https://www.bannerhealth.com/careers"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/about",
+        "https://www.bannerhealth.com/careers",
+        "https://www.bannerhealth.com/employees",
+        "https://www.bannerhealth.com/es/about",
+        "https://www.bannerhealth.com/es/careers",
+        "https://www.bannerhealth.com/es/staying-well",
+        "https://www.bannerhealth.com/getcarenow",
+        "https://www.bannerhealth.com/health-professionals",
+        "https://www.bannerhealth.com/insurance",
+        "https://www.bannerhealth.com/patients",
+        "https://www.bannerhealth.com/staying-well",
+        "https://www.bannerhealth.com/ways-to-give"
+      ],
+      "description": "Section landing page with hero banner, breadcrumbs, and a long stack of card grids"
+    },
+    {
+      "name": "landing-hero-cards",
+      "representativePages": [
+        "https://www.bannerhealth.com/banner-scottsdale",
+        "https://www.bannerhealth.com/es/health-professionals"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/banner-scottsdale",
+        "https://www.bannerhealth.com/celebrating-10-years-of-partnership",
+        "https://www.bannerhealth.com/es/banner-scottsdale",
+        "https://www.bannerhealth.com/es/celebrating-10-years-of-partnership",
+        "https://www.bannerhealth.com/es/employees",
+        "https://www.bannerhealth.com/es/health-professionals",
+        "https://www.bannerhealth.com/es/insurance",
+        "https://www.bannerhealth.com/es/patients",
+        "https://www.bannerhealth.com/es/ways-to-give",
+        "https://www.bannerhealth.com/services/maternity",
+        "https://www.bannerhealth.com/services/urgent-care"
+      ],
+      "description": "Landing page with intro block, breadcrumbs, hero banner, and several card grids"
+    },
+    {
+      "name": "video-landing",
+      "representativePages": [
+        "https://www.bannerhealth.com/bannerdaywyoming"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/bannerdaywyoming",
+        "https://www.bannerhealth.com/es/bannerdaywyoming"
+      ],
+      "description": "Minimal promotional landing page built around a video block with intro/outro content"
+    },
+    {
+      "name": "search-listing",
+      "representativePages": [
+        "https://www.bannerhealth.com/calendar",
+        "https://www.bannerhealth.com/services/imaging"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/calendar",
+        "https://www.bannerhealth.com/contact-us",
+        "https://www.bannerhealth.com/es/calendar",
+        "https://www.bannerhealth.com/es/contact-us",
+        "https://www.bannerhealth.com/es/locations",
+        "https://www.bannerhealth.com/healthcareblog",
+        "https://www.bannerhealth.com/locations",
+        "https://www.bannerhealth.com/medicare",
+        "https://www.bannerhealth.com/networksouth",
+        "https://www.bannerhealth.com/newsroom",
+        "https://www.bannerhealth.com/services/imaging"
+      ],
+      "description": "Directory/listing page with breadcrumbs and a search/filter block (locations, calendar, newsroom)"
+    },
+    {
+      "name": "breadcrumb-content",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/getcarenow"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/getcarenow"
+      ],
+      "description": "Simple content page with breadcrumbs and default text content"
+    },
+    {
+      "name": "service-detail-cards-carousel",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/healthcareblog",
+        "https://www.bannerhealth.com/services/cancer/cancer-type",
+        "https://www.bannerhealth.com/es/networkcolorado"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/healthcareblog",
+        "https://www.bannerhealth.com/es/medicare",
+        "https://www.bannerhealth.com/es/networkcolorado",
+        "https://www.bannerhealth.com/services/cancer/cancer-type",
+        "https://www.bannerhealth.com/services/cancer/cancer-type/breast-cancer/breast-reconstruction/types/implant",
+        "https://www.bannerhealth.com/services/heart",
+        "https://www.bannerhealth.com/services/research/about-banner-research/research-programs/brain-and-body-donation-program/for-researchers/faqs"
+      ],
+      "description": "Service/content detail page with breadcrumbs, custom intro blocks, dense card grids, and a closing carousel"
+    },
+    {
+      "name": "breadcrumb-partner-content",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/kaiser-permanente"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/kaiser-permanente",
+        "https://www.bannerhealth.com/kaiser-permanente"
+      ],
+      "description": "Partner/info content page with breadcrumbs and default rich-text content"
+    },
+    {
+      "name": "directory-breadcrumb",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/physician-directory"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/physician-directory"
+      ],
+      "description": "Directory entry page with breadcrumbs and default content"
+    },
+    {
+      "name": "search-results",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/search-results"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/search-results",
+        "https://www.bannerhealth.com/search-results"
+      ],
+      "description": "Search results page driven by a single search block"
+    },
+    {
+      "name": "hero-landing",
+      "representativePages": [
+        "https://www.bannerhealth.com/es/services"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/es/services",
+        "https://www.bannerhealth.com/services"
+      ],
+      "description": "Landing page anchored by a single hero block (services root landing)"
+    },
+    {
+      "name": "cards-landing",
+      "representativePages": [
+        "https://www.bannerhealth.com/networkcolorado"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/networkcolorado"
+      ],
+      "description": "Landing page composed of card grids without a hero"
+    },
+    {
+      "name": "physician-directory",
+      "representativePages": [
+        "https://www.bannerhealth.com/physician-directory"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/physician-directory"
+      ],
+      "description": "Physician directory entry page with breadcrumbs and default content"
+    },
+    {
+      "name": "service-landing-cards-carousel",
+      "representativePages": [
+        "https://www.bannerhealth.com/services/cancer"
+      ],
+      "urls": [
+        "https://www.bannerhealth.com/services/cancer"
+      ],
+      "description": "Service landing page with custom hero/intro blocks, multiple card grids, and a closing carousel"
+    }
+  ]
+}

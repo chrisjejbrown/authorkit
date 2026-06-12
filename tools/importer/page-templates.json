@@ -1,0 +1,304 @@
+{
+  "metadata": {
+    "projectType": "da"
+  },
+  "templates": [
+    {
+      "name": "homepage",
+      "urls": [
+        "https://www.bannerhealth.com/"
+      ],
+      "description": "Top-level landing page composed entirely of stacked card/promo blocks (no hero)",
+      "blocks": [
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".video-card-v2",
+            ".text-card",
+            ".basic-list-card",
+            ".shell-card",
+            ".text-card-circle-icon"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "section-landing-hero-cards",
+      "urls": [
+        "https://www.bannerhealth.com/about",
+        "https://www.bannerhealth.com/careers",
+        "https://www.bannerhealth.com/es/about",
+        "https://www.bannerhealth.com/es/careers",
+        "https://www.bannerhealth.com/es/staying-well",
+        "https://www.bannerhealth.com/getcarenow",
+        "https://www.bannerhealth.com/health-professionals",
+        "https://www.bannerhealth.com/insurance",
+        "https://www.bannerhealth.com/staying-well"
+      ],
+      "description": "Section landing page with hero banner, breadcrumbs, and a long stack of card grids",
+      "blocks": [
+        {
+          "name": "hero",
+          "instances": [
+            ".header-static .background-image-without-text"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".list-text-card-link",
+            ".text-card-circle-icon",
+            ".text-card-full-width-image"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "search-listing",
+      "urls": [
+        "https://www.bannerhealth.com/locations",
+        "https://www.bannerhealth.com/calendar",
+        "https://www.bannerhealth.com/contact-us",
+        "https://www.bannerhealth.com/es/calendar",
+        "https://www.bannerhealth.com/es/contact-us",
+        "https://www.bannerhealth.com/es/locations",
+        "https://www.bannerhealth.com/healthcareblog",
+        "https://www.bannerhealth.com/medicare",
+        "https://www.bannerhealth.com/networksouth",
+        "https://www.bannerhealth.com/newsroom"
+      ],
+      "description": "Directory/listing page with breadcrumbs and a search/filter block (locations, calendar, newsroom, medicare)",
+      "blocks": [
+        {
+          "name": "search",
+          "instances": [
+            "section.search-bar-container"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".video-card-v2",
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".list-text-card-link",
+            ".shell-card",
+            ".text-card-circle-icon",
+            ".text-card-full-width-image"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "service-detail-cards-carousel",
+      "urls": [
+        "https://www.bannerhealth.com/es/medicare",
+        "https://www.bannerhealth.com/es/healthcareblog"
+      ],
+      "description": "Service/content detail page with breadcrumbs, card grids, and a closing carousel",
+      "blocks": [
+        {
+          "name": "carousel",
+          "instances": [
+            "div.text-card-al-carousel"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".video-card-v2",
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".list-text-card-link",
+            ".shell-card",
+            ".text-card-circle-icon",
+            ".text-card-full-width-image",
+            ".text-card-feature-articles",
+            ".video-card-list",
+            ".text-card-article-list-xs"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "hero-landing",
+      "urls": [
+        "https://www.bannerhealth.com/services",
+        "https://www.bannerhealth.com/es/services"
+      ],
+      "description": "Landing page anchored by a hero/intro plus a service-category card grid",
+      "blocks": [
+        {
+          "name": "hero",
+          "instances": [
+            ".header-static .background-image-without-text"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".video-card-v2",
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".list-text-card-link",
+            ".shell-card",
+            ".text-card-circle-icon",
+            ".text-card-full-width-image"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "search-results",
+      "urls": [
+        "https://www.bannerhealth.com/search-results",
+        "https://www.bannerhealth.com/es/search-results"
+      ],
+      "description": "Search results page driven by a single search block",
+      "blocks": [
+        {
+          "name": "search",
+          "instances": [
+            "form.search-filter",
+            "section.search-bar-container"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "breadcrumb-partner-content",
+      "urls": [
+        "https://www.bannerhealth.com/kaiser-permanente",
+        "https://www.bannerhealth.com/es/kaiser-permanente"
+      ],
+      "description": "Partner/info content page with breadcrumbs, hero, default rich text, and a newsletter signup",
+      "blocks": [
+        {
+          "name": "hero",
+          "instances": [
+            ".header-static .background-image-without-text",
+            ".background-image-without-text"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".icon-shell-card",
+            ".shell-card",
+            ".text-card",
+            ".basic-list-card",
+            ".list-card"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "cards-landing",
+      "urls": [
+        "https://www.bannerhealth.com/networkcolorado"
+      ],
+      "description": "Landing page composed of card grids without a dedicated hero",
+      "blocks": [
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".video-card-v2",
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".list-text-card-link",
+            ".shell-card",
+            ".text-card-circle-icon",
+            ".text-card-full-width-image"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "directory-breadcrumb",
+      "urls": [
+        "https://www.bannerhealth.com/es/physician-directory"
+      ],
+      "description": "Directory entry page with breadcrumbs and a provider-search widget",
+      "blocks": [
+        {
+          "name": "search",
+          "instances": [
+            "#physician_search",
+            "section.search-bar-container",
+            "form.search-filter"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".list-card",
+            ".text-card",
+            ".basic-list-card"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "physician-directory",
+      "urls": [
+        "https://www.bannerhealth.com/physician-directory"
+      ],
+      "description": "Physician directory entry page with breadcrumbs and a provider-search widget",
+      "blocks": [
+        {
+          "name": "search",
+          "instances": [
+            "#physician_search",
+            "section.search-bar-container",
+            "form.search-filter"
+          ]
+        },
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".list-card",
+            ".text-card",
+            ".basic-list-card"
+          ]
+        }
+      ],
+      "sections": []
+    },
+    {
+      "name": "breadcrumb-content",
+      "urls": [
+        "https://www.bannerhealth.com/es/getcarenow"
+      ],
+      "description": "Simple content page with breadcrumbs and default text content",
+      "blocks": [
+        {
+          "name": "cards-feature",
+          "instances": [
+            ".text-card",
+            ".basic-list-card",
+            ".list-card",
+            ".shell-card",
+            ".text-card-circle-icon"
+          ]
+        }
+      ],
+      "sections": []
+    }
+  ]
+}

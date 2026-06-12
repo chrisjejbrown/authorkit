@@ -1,0 +1,53 @@
+{
+  "variantName": "carousel",
+  "baseBlock": "carousel",
+  "version": "1.0.0",
+  "created": "2026-06-12T20:02:00.000Z",
+  "sourceContext": {
+    "originUrl": "https://www.bannerhealth.com/es/healthcareblog",
+    "originPage": "Banner Health blog landing page (service-detail-cards-carousel template)",
+    "blockPosition": "middle (between the featured-articles card grid and the video/article card grids)"
+  },
+  "visualCharacteristics": {
+    "colorScheme": "light",
+    "density": "spacious",
+    "purpose": "feature",
+    "imagePattern": "large"
+  },
+  "contentPattern": {
+    "structure": "section heading + horizontally-scrolling track of article slides (image + category eyebrow + title + date per slide)",
+    "buttonCount": 0,
+    "imageCount": 12,
+    "slideCount": 12
+  },
+  "reuseGuidance": {
+    "suitableFor": [
+      "horizontally-scrolling related/featured/recent article sliders",
+      "carousels of image + heading slides on landing pages",
+      "any service-detail-cards-carousel instance that renders a slider"
+    ],
+    "notSuitableFor": [
+      "static (non-scrolling) card grids (use cards / cards-feature)",
+      "tabbed or accordion content (use tabs / accordion)"
+    ]
+  },
+  "sourceMarkup": {
+    "containerSelector": "div.text-card-al-carousel",
+    "headingSelector": "h2.text-card-al-carousel-heading",
+    "slideTrackSelector": "div.text-card-al-carousel-slick",
+    "slideSelector": "div.text-card-al-carousel-slide",
+    "slideInner": {
+      "card": "div.text-card-article-card",
+      "image": "div.text-card-article-card-image > img (+ a.text-card-article-card-image-link)",
+      "eyebrow": "a.text-card-article-card-eyebrow-link",
+      "title": "a.text-card-article-card-title-link",
+      "date": "span.text-card-article-card-date"
+    },
+    "note": "Standard Block Collection carousel block. The page-transformer/parser (built later by import-infrastructure) maps each div.text-card-al-carousel-slide to one carousel row: first column = slide image, second column = slide content (eyebrow + title link + date)."
+  },
+  "usage": {
+    "pagesUsing": ["/es/healthcareblog"],
+    "reuseCount": 1,
+    "lastUsed": "2026-06-12T20:02:00.000Z"
+  }
+}
