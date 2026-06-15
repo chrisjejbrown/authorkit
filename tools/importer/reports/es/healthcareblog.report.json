@@ -2,12 +2,12 @@
   "status": "success",
   "url": "https://www.bannerhealth.com/es/healthcareblog",
   "path": "es/healthcareblog",
-  "timestamp": "2026-06-12T20:24:29.542Z",
+  "timestamp": "2026-06-14T21:01:01.496Z",
   "title": "Blog de Banner Health",
   "template": "service-detail-cards-carousel",
   "blocks": [
+    "feature-articles",
     "carousel",
-    "cards-feature",
     "cards-feature",
     "cards-feature",
     "cards-feature"

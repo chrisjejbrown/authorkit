@@ -41,7 +41,20 @@
         {
           "name": "hero",
           "instances": [
-            ".header-static .background-image-without-text"
+            ".header-static .background-image-without-text",
+            ".text-card-background-image"
+          ]
+        },
+        {
+          "name": "accordion",
+          "instances": [
+            ".accordion"
+          ]
+        },
+        {
+          "name": "personas",
+          "instances": [
+            ".persona-list"
           ]
         },
         {
@@ -67,7 +80,6 @@
         "https://www.bannerhealth.com/es/calendar",
         "https://www.bannerhealth.com/es/contact-us",
         "https://www.bannerhealth.com/es/locations",
-        "https://www.bannerhealth.com/healthcareblog",
         "https://www.bannerhealth.com/medicare",
         "https://www.bannerhealth.com/networksouth",
         "https://www.bannerhealth.com/newsroom"
@@ -100,10 +112,17 @@
       "name": "service-detail-cards-carousel",
       "urls": [
         "https://www.bannerhealth.com/es/medicare",
-        "https://www.bannerhealth.com/es/healthcareblog"
+        "https://www.bannerhealth.com/es/healthcareblog",
+        "https://www.bannerhealth.com/healthcareblog"
       ],
       "description": "Service/content detail page with breadcrumbs, card grids, and a closing carousel",
       "blocks": [
+        {
+          "name": "feature-articles",
+          "instances": [
+            ".text-card-feature-articles"
+          ]
+        },
         {
           "name": "carousel",
           "instances": [
@@ -121,7 +140,6 @@
             ".shell-card",
             ".text-card-circle-icon",
             ".text-card-full-width-image",
-            ".text-card-feature-articles",
             ".video-card-list",
             ".text-card-article-list-xs"
           ]

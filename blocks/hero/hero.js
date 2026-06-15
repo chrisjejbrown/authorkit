@@ -57,6 +57,27 @@ function decorateForeground(fg) {
 
 export default async function init(el) {
   const rows = [...el.querySelectorAll(':scope > div')];
+
+  // Background-image-only hero (single row whose only content is an image):
+  // use that row as the background and add an empty foreground so the image
+  // renders as a full-bleed banner rather than a small inline foreground image.
+  const isImageOnly = (row) => {
+    const hasImg = row.querySelector('picture, img');
+    const hasText = row.querySelector('h1, h2, h3, h4, h5, h6, p, ul, ol')
+      || (row.textContent || '').trim().length > 0;
+    return hasImg && !hasText;
+  };
+  if (rows.length === 1 && isImageOnly(rows[0])) {
+    const bg = rows[0];
+    bg.classList.add('hero-background');
+    decorateBackground(bg);
+    const emptyFg = document.createElement('div');
+    emptyFg.classList.add('hero-foreground');
+    el.append(emptyFg);
+    el.classList.add('hero-banner-only');
+    return;
+  }
+
   const fg = rows.pop();
   fg.classList.add('hero-foreground');
   decorateForeground(fg);

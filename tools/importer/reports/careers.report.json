@@ -2,11 +2,13 @@
   "status": "success",
   "url": "https://www.bannerhealth.com/careers",
   "path": "careers",
-  "timestamp": "2026-06-12T20:22:30.709Z",
+  "timestamp": "2026-06-15T19:29:33.230Z",
   "title": "Health Care Careers",
   "template": "section-landing-hero-cards",
   "blocks": [
-    "cards-feature",
+    "hero",
+    "accordion",
+    "personas",
     "cards-feature",
     "cards-feature",
     "cards-feature"

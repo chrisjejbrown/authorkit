@@ -104,13 +104,15 @@ function decoratePictures(el) {
   const pics = el.querySelectorAll('picture');
   for (const pic of pics) {
     const source = pic.querySelector('source');
-    const clone = source.cloneNode();
-    const [pathname, params] = clone.getAttribute('srcset').split('?');
-    const search = new URLSearchParams(params);
-    search.set('width', 3000);
-    clone.setAttribute('srcset', `${pathname}?${search.toString()}`);
-    clone.setAttribute('media', '(min-width: 1440px)');
-    pic.prepend(clone);
+    if (source) {
+      const clone = source.cloneNode();
+      const [pathname, params] = clone.getAttribute('srcset').split('?');
+      const search = new URLSearchParams(params);
+      search.set('width', 3000);
+      clone.setAttribute('srcset', `${pathname}?${search.toString()}`);
+      clone.setAttribute('media', '(min-width: 1440px)');
+      pic.prepend(clone);
+    }
   }
 }
 

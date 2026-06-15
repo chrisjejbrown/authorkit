@@ -305,6 +305,35 @@ a {
   }
 }
 
+/* Coloured section bands (Banner Health section-landing pages). The source
+   alternates a navy (#00205b) brand band and a light-grey (#f6f7fa) band; the
+   section transformer tags these via Section Metadata style = navy / grey. */
+.section.navy,
+.section.grey {
+  padding: 48px 24px;
+}
+
+.section.navy {
+  background-color: #00205b;
+}
+
+/* section-metadata.css sets `.section > * { color: light-dark(...) }`, which
+   targets the .default-content/.block-content children directly and outranks a
+   plain `.section.navy { color }` (that only colours the section element and
+   relies on inheritance). Colour the children to win that specificity battle. */
+.section.navy,
+.section.navy > * {
+  color: #fff;
+}
+
+.section.navy a {
+  color: #fff;
+}
+
+.section.grey {
+  background-color: #f6f7fa;
+}
+
 main {
   ul,
   ol {
@@ -357,6 +386,19 @@ button {
 img {
   width: 100%;
   height: auto;
+}
+
+/* Inline SVG icons (e.g. Banner Health "search with heart" / "profile with
+   heart" glyphs) are small decorative graphics. The rule above stretches them
+   full-width, and because these SVGs lack intrinsic dimensions, width:auto
+   alone lets them balloon to fill their container. Cap both axes so they keep
+   an icon-sized footprint. */
+main img[src$=".svg"],
+main img[src*=".svg?"] {
+  width: auto;
+  height: auto;
+  max-width: 160px;
+  max-height: 160px;
 }
 
 svg {

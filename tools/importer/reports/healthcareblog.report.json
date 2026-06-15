@@ -2,10 +2,14 @@
   "status": "success",
   "url": "https://www.bannerhealth.com/healthcareblog",
   "path": "healthcareblog",
-  "timestamp": "2026-06-12T20:23:53.623Z",
+  "timestamp": "2026-06-14T21:02:23.100Z",
   "title": "Banner Health Blog",
-  "template": "search-listing",
+  "template": "service-detail-cards-carousel",
   "blocks": [
+    "feature-articles",
+    "carousel",
+    "cards-feature",
+    "cards-feature",
     "cards-feature"
   ]
 }

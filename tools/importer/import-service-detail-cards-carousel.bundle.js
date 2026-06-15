@@ -41,8 +41,73 @@ var CustomImportScript = (() => {
     default: () => import_service_detail_cards_carousel_default
   });
 
-  // tools/importer/parsers/carousel.js
+  // tools/importer/parsers/feature-articles.js
   function parse(element, { document }) {
+    const cells = [];
+    const cards = element.querySelectorAll(".text-card-feature-article");
+    const DATA_ATTRS = ["data-src", "data-original", "data-lazy", "data-lazy-src", "data-original-src", "data-url", "data-image"];
+    const isReal = (u) => u && !u.startsWith("data:") && u !== "about:blank";
+    const bgUrl = (node) => {
+      const style = node && node.getAttribute && node.getAttribute("style");
+      if (!style) return "";
+      const m = style.match(/url\((['"]?)(.*?)\1\)/i);
+      return m ? m[2] : "";
+    };
+    const resolveSrc = (card) => {
+      const img = card.querySelector("img");
+      if (img) {
+        for (const a of DATA_ATTRS) {
+          const v = img.getAttribute(a);
+          if (isReal(v)) return v;
+        }
+        if (isReal(img.getAttribute("src"))) return img.getAttribute("src");
+      }
+      const bgNode = card.querySelector('[style*="background-image"]') || card;
+      const bg = bgUrl(bgNode);
+      if (isReal(bg)) return bg;
+      return "";
+    };
+    cards.forEach((card) => {
+      const eyebrow = card.querySelector(".text-card-feature-article-eyebrow");
+      const titleLink = card.querySelector(".text-card-feature-article-title a");
+      const isMedium = card.classList.contains("medium-card");
+      const src = resolveSrc(card);
+      let imageCell = "";
+      if (src) {
+        const newImg = document.createElement("img");
+        newImg.setAttribute("src", src);
+        newImg.setAttribute("alt", titleLink ? titleLink.textContent.trim() : "");
+        imageCell = newImg;
+      }
+      const body = [];
+      const size = document.createElement("p");
+      size.textContent = isMedium ? "large" : "small";
+      body.push(size);
+      if (eyebrow && eyebrow.textContent.trim()) {
+        const p = document.createElement("p");
+        p.textContent = eyebrow.textContent.trim();
+        body.push(p);
+      }
+      if (titleLink) {
+        const h = document.createElement("h3");
+        const a = document.createElement("a");
+        a.setAttribute("href", titleLink.getAttribute("href") || "#");
+        a.textContent = titleLink.textContent.trim();
+        h.append(a);
+        body.push(h);
+      }
+      cells.push([imageCell, body]);
+    });
+    if (!cells.length) return;
+    const block = WebImporter.Blocks.createBlock(document, {
+      name: "feature-articles",
+      cells
+    });
+    element.replaceWith(block);
+  }
+
+  // tools/importer/parsers/carousel.js
+  function parse2(element, { document }) {
     const isPlaceholder = (u) => /data:image|blank|placeholder|spacer|1x1|loading/i.test(u);
     function resolveImgUrl(img) {
       if (!img) return null;
@@ -136,7 +201,7 @@ var CustomImportScript = (() => {
   }
 
   // tools/importer/parsers/cards-feature.js
-  function parse2(element, { document }) {
+  function parse3(element, { document }) {
     if (element.isConnected === false) {
       return;
     }
@@ -169,7 +234,14 @@ var CustomImportScript = (() => {
       }
       return body;
     };
-    const bodyCell = (body, fallback) => body.length ? [body] : [[clone(fallback)]];
+    const pushCardRow = (image, body, fallback) => {
+      const bodyNodes = body && body.length ? body : [clone(fallback)];
+      if (image) {
+        cells.push([image, bodyNodes]);
+      } else {
+        cells.push([bodyNodes]);
+      }
+    };
     const absolutize = (u) => {
       if (!u) return u;
       try {
@@ -259,24 +331,30 @@ var CustomImportScript = (() => {
       }
       return body;
     };
-    if (element.matches(".text-card-feature-articles")) {
-      const articles = Array.from(element.querySelectorAll(".text-card-feature-article"));
-      articles.forEach((card) => {
-        const info = card.querySelector(":scope > .text-card-feature-article-info, .text-card-feature-article-info");
-        const img = resolveImage(card.querySelector(":scope > img, img"), card);
-        const body = articleBody(info || card, {
-          eyebrowSel: ".text-card-feature-article-eyebrow",
-          titleSel: ".text-card-feature-article-title a, a.text-card-feature-article-button",
-          dateSel: ".text-card-feature-article-date"
-        });
-        if (img) cells.push([img]);
-        if (body.length) cells.push([body]);
+    const gridSiblings = (el, sameSel) => {
+      const colWrap = el.closest('[class*="col-"]');
+      if (!colWrap) return null;
+      const row = colWrap.parentElement;
+      if (!row || !row.matches || !row.matches(".row")) return null;
+      const siblings = Array.from(row.querySelectorAll(sameSel)).filter((c) => {
+        const w = c.closest('[class*="col-"]');
+        return w && w.parentElement === row;
       });
-      if (!cells.length) cells.push([[clone(element)]]);
+      return siblings.length >= 2 ? siblings : null;
+    };
+    const emitGrid = (siblings, buildCard) => {
+      siblings.forEach((card) => {
+        const { image, body, fallback } = buildCard(card);
+        pushCardRow(image, body, fallback || card);
+      });
+      if (!cells.length) cells.push([[clone(siblings[0])]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
+      siblings.forEach((card) => {
+        if (card === element) return;
+        if (card.isConnected) card.replaceWith(document.createElement("div"));
+      });
       element.replaceWith(block2);
-      return;
-    }
+    };
     if (element.matches(".video-card-list")) {
       const heading = element.querySelector(".video-card-list-heading, h2");
       if (heading && hasContent(heading)) {
@@ -317,8 +395,7 @@ var CustomImportScript = (() => {
           }
           body.push(h);
         }
-        if (img) cells.push([img]);
-        if (body.length) cells.push([body]);
+        if (img || body.length) pushCardRow(img, body, card);
       });
       if (!cells.length) cells.push([[clone(element)]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
@@ -342,8 +419,7 @@ var CustomImportScript = (() => {
           titleSel: ".text-card-article-card-title a, .text-card-article-card-title-link",
           dateSel: ".text-card-article-card-date"
         });
-        if (img) cells.push([img]);
-        if (body.length) cells.push([body]);
+        if (img || body.length) pushCardRow(img, body, card);
       });
       if (!cells.length) cells.push([[clone(element)]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
@@ -373,7 +449,7 @@ var CustomImportScript = (() => {
       const placeholder = document.createElement("p");
       placeholder.textContent = `Email signup: enter your email address and select \u201C${btnLabel}\u201D.`;
       body.push(placeholder);
-      cells.push(body.length ? [body] : [[""]]);
+      pushCardRow(null, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
@@ -389,15 +465,14 @@ var CustomImportScript = (() => {
         return !owner || !element.contains(owner) || owner === element;
       }) : [];
       items.forEach((item) => {
-        const icon = item.querySelector(".icon-circle img, .icon img, img");
+        const icon = resolveImage(item.querySelector(".icon-circle img, .icon img, img"), item) || (item.querySelector(".icon-circle img, .icon img, img") ? clone(item.querySelector(".icon-circle img, .icon img, img")) : null);
         const body = [];
         const heading = item.querySelector('.card-body h3, h3, [class*="heading"]');
         if (heading && hasContent(heading)) body.push(clone(heading));
         item.querySelectorAll(".card-body > p, .card-text").forEach((p) => {
           if (hasContent(p)) body.push(clone(p));
         });
-        if (icon) cells.push([clone(icon)]);
-        cells.push(body.length ? [body] : [[""]]);
+        pushCardRow(icon, body, item);
       });
       if (!cells.length) cells.push([[clone(element)]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
@@ -426,7 +501,7 @@ var CustomImportScript = (() => {
           cta.textContent = label;
           body.push(cta);
         }
-        if (body.length) cells.push([body]);
+        if (body.length) pushCardRow(null, body, link);
       });
       if (!cells.length) cells.push([[clone(element)]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
@@ -435,7 +510,7 @@ var CustomImportScript = (() => {
     }
     if (element.matches(".text-card-full-width-image")) {
       const image = element.querySelector("img");
-      if (image) cells.push([clone(image)]);
+      const imgClone = image ? clone(image) : null;
       const body = [];
       const heading = element.querySelector('h1, h2, h3, [class*="heading"], .card-title');
       if (heading && hasContent(heading)) body.push(clone(heading));
@@ -443,7 +518,7 @@ var CustomImportScript = (() => {
         if (hasContent(p)) body.push(clone(p));
       });
       element.querySelectorAll('a.btn, a[class*="button"]').forEach((a) => body.push(clone(a)));
-      if (body.length) cells.push([body]);
+      if (imgClone || body.length) pushCardRow(imgClone, body, element);
       if (!cells.length) cells.push([[clone(element)]]);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
@@ -453,20 +528,47 @@ var CustomImportScript = (() => {
       if (element.parentElement && element.parentElement.closest(".text-card-circle-icon")) {
         return;
       }
-      const icon = element.querySelector(".icon img, img");
-      const body = collectBody(
-        element,
-        'h3, .card-body h3, [class*="heading"]',
-        ".card-body > p, .card-text",
-        ".card-body a"
-      );
-      if (icon) cells.push([icon.cloneNode(true)]);
-      cells.push(bodyCell(body, element));
+      const buildCard = (card) => {
+        const iconNode = card.querySelector(".icon img, img");
+        const image2 = iconNode ? clone(iconNode) : null;
+        const body2 = collectBody(
+          card,
+          'h3, .card-body h3, [class*="heading"]',
+          ".card-body > p, .card-text",
+          null
+        ).map((n) => clone(n));
+        return { image: image2, body: body2 };
+      };
+      const siblings = gridSiblings(element, ".text-card-circle-icon");
+      if (siblings) {
+        if (element !== siblings[0]) return;
+        emitGrid(siblings, buildCard);
+        return;
+      }
+      const { image, body } = buildCard(element);
+      pushCardRow(image, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
     }
     if (element.matches(".video-card-v2")) {
+      const buildCard = (card) => {
+        const imgNode = card.querySelector(".background-image-without-text img, img");
+        const image2 = imgNode ? clone(imgNode) : null;
+        const body2 = collectBody(
+          card,
+          ".video-title, h1, h2",
+          null,
+          ".bh-side-by-side-buttons a, a.btn"
+        ).map((n) => clone(n));
+        return { image: image2, body: body2 };
+      };
+      const siblings = gridSiblings(element, ".video-card-v2");
+      if (siblings) {
+        if (element !== siblings[0]) return;
+        emitGrid(siblings, buildCard);
+        return;
+      }
       const image = element.querySelector(".background-image-without-text img, img");
       const body = collectBody(
         element,
@@ -474,8 +576,7 @@ var CustomImportScript = (() => {
         null,
         ".bh-side-by-side-buttons a, a.btn"
       );
-      if (image) cells.push([image]);
-      cells.push(bodyCell(body, element));
+      pushCardRow(image, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
@@ -487,12 +588,30 @@ var CustomImportScript = (() => {
         ".card-text",
         ".text-card-left-button a, a.btn"
       );
-      cells.push(bodyCell(body, element));
+      pushCardRow(null, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
     }
     if (element.matches(".basic-list-card")) {
+      const buildCard = (card) => {
+        const body2 = [];
+        const heading2 = card.querySelector(".card-title, h2, h3");
+        if (heading2) body2.push(clone(heading2));
+        card.querySelectorAll(".content-container > div").forEach((div) => {
+          if (div.querySelector(".card-title, h2, h3")) return;
+          if (div.querySelector("a.btn")) return;
+          body2.push(clone(div));
+        });
+        card.querySelectorAll("a.btn").forEach((a) => body2.push(clone(a)));
+        return { image: null, body: body2 };
+      };
+      const siblings = gridSiblings(element, ".basic-list-card");
+      if (siblings) {
+        if (element !== siblings[0]) return;
+        emitGrid(siblings, buildCard);
+        return;
+      }
       const body = [];
       const heading = element.querySelector(".card-title, h2, h3");
       if (heading) body.push(heading);
@@ -502,12 +621,29 @@ var CustomImportScript = (() => {
         body.push(div);
       });
       element.querySelectorAll("a.btn").forEach((a) => body.push(a));
-      cells.push(bodyCell(body, element));
+      pushCardRow(null, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
     }
     if (element.matches(".shell-card")) {
+      const buildCard = (card) => {
+        const imgNode = card.querySelector(".shell-card-image img, .icon-svg img, img");
+        const image2 = imgNode ? clone(imgNode) : null;
+        const body2 = collectBody(
+          card,
+          ".shell-card-title",
+          ".shell-card-text",
+          "a.btn"
+        ).map((n) => clone(n));
+        return { image: image2, body: body2 };
+      };
+      const siblings = gridSiblings(element, ".shell-card");
+      if (siblings) {
+        if (element !== siblings[0]) return;
+        emitGrid(siblings, buildCard);
+        return;
+      }
       const image = element.querySelector(".shell-card-image img, .icon-svg img, img");
       const body = collectBody(
         element,
@@ -515,13 +651,38 @@ var CustomImportScript = (() => {
         ".shell-card-text",
         "a.btn"
       );
-      if (image) cells.push([image]);
-      cells.push(bodyCell(body, element));
+      pushCardRow(image, body, element);
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
     }
     if (element.matches(".text-card")) {
+      const buildCard = (card) => {
+        const imgNode = card.querySelector(".text-card-image img");
+        const nestedBody2 = card.querySelector(".image-text-card-body");
+        if (imgNode && nestedBody2) {
+          const body2 = collectBody(
+            nestedBody2,
+            ".card-title",
+            ".card-text",
+            ".text-card-left-button a, a.btn"
+          ).map((n) => clone(n));
+          return { image: clone(imgNode), body: body2 };
+        }
+        const body = collectBody(
+          card,
+          ".card-body > h1, .card-body > h2, .card-body > h3, h3",
+          ".card-text, .card-body > p",
+          ".card-body a.btn"
+        ).map((n) => clone(n));
+        return { image: null, body };
+      };
+      const siblings = gridSiblings(element, ".text-card");
+      if (siblings) {
+        if (element !== siblings[0]) return;
+        emitGrid(siblings, buildCard);
+        return;
+      }
       const image = element.querySelector(".text-card-image img");
       const nestedBody = element.querySelector(".image-text-card-body");
       if (image && nestedBody) {
@@ -531,8 +692,7 @@ var CustomImportScript = (() => {
           ".card-text",
           ".text-card-left-button a, a.btn"
         );
-        cells.push([image]);
-        cells.push(bodyCell(body, nestedBody));
+        pushCardRow(image, body, nestedBody);
       } else {
         const body = collectBody(
           element,
@@ -540,13 +700,13 @@ var CustomImportScript = (() => {
           ".card-text, .card-body > p",
           ".card-body a.btn"
         );
-        cells.push(bodyCell(body, element));
+        pushCardRow(null, body, element);
       }
       const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
       element.replaceWith(block2);
       return;
     }
-    cells.push([element]);
+    pushCardRow(null, [element], element);
     const block = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
     element.replaceWith(block);
   }
@@ -560,7 +720,10 @@ var CustomImportScript = (() => {
         "#searchModal",
         "#geoLocationModal",
         "#destination_publishing_iframe_bannerhealthcare_0",
-        ".aamIframeLoaded"
+        ".aamIframeLoaded",
+        // Dismissible global app-install promo widget (logo + INSTALL/Open),
+        // not authorable page content. Verified in cleaned.html (line ~248).
+        "section.bh-app-mobile-download"
       ]);
     }
     if (hookName === TransformHook.afterTransform) {
@@ -576,8 +739,9 @@ var CustomImportScript = (() => {
 
   // tools/importer/import-service-detail-cards-carousel.js
   var parsers = {
-    "carousel": parse,
-    "cards-feature": parse2
+    "feature-articles": parse,
+    "carousel": parse2,
+    "cards-feature": parse3
   };
   var transformers = [transform];
   var PAGE_TEMPLATE = {
@@ -585,9 +749,16 @@ var CustomImportScript = (() => {
     "description": "Service/content detail page with breadcrumbs, card grids, and a closing carousel",
     "urls": [
       "https://www.bannerhealth.com/es/medicare",
-      "https://www.bannerhealth.com/es/healthcareblog"
+      "https://www.bannerhealth.com/es/healthcareblog",
+      "https://www.bannerhealth.com/healthcareblog"
     ],
     "blocks": [
+      {
+        "name": "feature-articles",
+        "instances": [
+          ".text-card-feature-articles"
+        ]
+      },
       {
         "name": "carousel",
         "instances": [
@@ -605,7 +776,6 @@ var CustomImportScript = (() => {
           ".shell-card",
           ".text-card-circle-icon",
           ".text-card-full-width-image",
-          ".text-card-feature-articles",
           ".video-card-list",
           ".text-card-article-list-xs"
         ]

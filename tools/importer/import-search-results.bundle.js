@@ -60,7 +60,10 @@ var CustomImportScript = (() => {
         "#searchModal",
         "#geoLocationModal",
         "#destination_publishing_iframe_bannerhealthcare_0",
-        ".aamIframeLoaded"
+        ".aamIframeLoaded",
+        // Dismissible global app-install promo widget (logo + INSTALL/Open),
+        // not authorable page content. Verified in cleaned.html (line ~248).
+        "section.bh-app-mobile-download"
       ]);
     }
     if (hookName === TransformHook.afterTransform) {

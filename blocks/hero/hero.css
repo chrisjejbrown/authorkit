@@ -152,6 +152,37 @@
       text-align: center;
     }
   }
+
+  /* Background-image-only banner: empty foreground, so size the hero by the
+     image's natural ratio as a full-bleed banner strip. The image is placed in
+     normal flow (not absolute) so the hero reserves the correct height. */
+  &.hero-banner-only {
+    .hero-foreground {
+      display: none;
+    }
+
+    .hero-background {
+      position: static;
+
+      picture {
+        position: static;
+        display: block;
+        inset: auto;
+      }
+
+      > div {
+        position: static;
+      }
+
+      img {
+        position: static;
+        display: block;
+        height: auto;
+        width: 100%;
+        object-fit: cover;
+      }
+    }
+  }
 }
 
 @media (width >= 600px) {

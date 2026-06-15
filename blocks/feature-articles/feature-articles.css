@@ -1,0 +1,92 @@
+.feature-articles > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.feature-articles > ul > li {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  min-height: 240px;
+  cursor: pointer;
+}
+
+/* Large card spans both rows on the left. */
+.feature-articles > ul > li.feature-article-large {
+  grid-row: span 2;
+  min-height: 496px;
+}
+
+.feature-article-image {
+  position: absolute;
+  inset: 0;
+  line-height: 0;
+}
+
+.feature-article-image picture,
+.feature-article-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Gradient + overlaid text. */
+.feature-articles > ul > li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0%) 35%, rgb(0 0 0 / 75%) 100%);
+}
+
+.feature-article-info {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 24px;
+  color: #fff;
+}
+
+.feature-article-eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+.feature-article-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.feature-articles > ul > li.feature-article-large .feature-article-title {
+  font-size: 26px;
+}
+
+.feature-article-title a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.feature-article-title a:hover {
+  text-decoration: underline;
+}
+
+/* Mobile: single column, large card no longer spans 2 rows. */
+@media (width < 768px) {
+  .feature-articles > ul {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-articles > ul > li.feature-article-large {
+    grid-row: auto;
+    min-height: 320px;
+  }
+}

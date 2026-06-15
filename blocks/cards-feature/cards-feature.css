@@ -7,13 +7,110 @@
   gap: 24px;
 }
 
+/* Text-only card grids (no images — e.g. paragraph/promo card pairs) need
+   wider columns so the copy is readable; they should form 2-3 columns, not the
+   ~5 narrow columns that icon/image card grids use. */
+.cards-feature > ul:not(:has(.cards-feature-card-image)) {
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
+/* A single-card block (hero / promo band) spans the full content width
+   rather than rendering as one narrow grid column. */
+.cards-feature > ul:has(> li:only-child) {
+  grid-template-columns: 1fr;
+}
+
 .cards-feature > ul > li {
   border: 1px solid #dadada;
   background-color: var(--background-color);
 }
 
+/* Single full-width promo/hero card: no card border, and — when it has both an
+   image and a text body — lay them out side by side (text left on a tinted
+   panel, image right) to match the source promo band. */
+.cards-feature > ul:has(> li:only-child) > li {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-body {
+  flex: 1 1 320px;
+  order: 1;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px;
+  background-color: #e6f0f7;
+}
+
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image {
+  flex: 1 1 320px;
+  order: 2;
+}
+
+.cards-feature > ul:has(> li:only-child) > li img {
+  aspect-ratio: auto;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* When the promo image is an SVG icon (not a photo), it must be contained and
+   centered at a modest size rather than cover-stretched to fill half the card. */
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image:has(img[src*="format=svg"]),
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image:has(img[src$=".svg"]) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image img[src*="format=svg"],
+.cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image img[src$=".svg"] {
+  width: 96px;
+  height: 96px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* A promo card with only a body (no image) keeps full-width centered text. */
+.cards-feature > ul:has(> li:only-child) > li:not(:has(.cards-feature-card-image)) > .cards-feature-card-body {
+  background-color: transparent;
+  padding: 24px 0;
+}
+
+/* Mobile: stack a single promo card vertically with the image ABOVE the text. */
+@media (width < 768px) {
+  .cards-feature > ul:has(> li:only-child) > li {
+    flex-direction: column;
+  }
+
+  .cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-image {
+    order: 1;
+  }
+
+  .cards-feature > ul:has(> li:only-child) > li > .cards-feature-card-body {
+    order: 2;
+    padding: 24px;
+  }
+}
+
 .cards-feature .cards-feature-card-body {
   margin: 16px;
+}
+
+/* Card title links should read as headings, not underlined inline links. */
+.cards-feature .cards-feature-card-body h2 a,
+.cards-feature .cards-feature-card-body h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cards-feature .cards-feature-card-body h2 a:hover,
+.cards-feature .cards-feature-card-body h3 a:hover {
+  text-decoration: underline;
 }
 
 .cards-feature .cards-feature-card-image {

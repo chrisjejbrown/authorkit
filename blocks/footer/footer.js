@@ -1,30 +1,79 @@
-import { getConfig, getMetadata } from '../../scripts/ak.js';
-import { loadFragment } from '../fragment/fragment.js';
+// Banner Health footer: white logo, 4 link columns, social icons, legal bar.
+// Content authored in /content/footer.plain.html; this reads that DOM and
+// assigns layout roles. No copy is hardcoded here.
 
-const FOOTER_PATH = '/fragments/nav/footer';
+async function fetchFooter() {
+  let resp = await fetch('/content/footer.plain.html');
+  if (!resp.ok) {
+    const footerPath = '/footer';
+    resp = await fetch(`${footerPath}.plain.html`);
+  }
+  if (!resp.ok) return null;
+  const html = await resp.text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.querySelector('main') || doc.body;
+}
 
-/**
- * loads and decorates the footer
- * @param {Element} el The footer element
- */
 export default async function init(el) {
-  const { locale } = getConfig();
-  const footerMeta = getMetadata('footer');
-  const path = footerMeta || FOOTER_PATH;
-  try {
-    const fragment = await loadFragment(`${locale.prefix}${path}`);
-    fragment.classList.add('footer-content');
+  const content = await fetchFooter();
+  if (!content) return;
+  const sections = [...content.querySelectorAll(':scope > div')];
+  el.textContent = '';
+  el.classList.add('bh-footer');
 
-    const sections = [...fragment.querySelectorAll('.section')];
+  const top = document.createElement('div');
+  top.className = 'footer-top';
+  const inner = document.createElement('div');
+  inner.className = 'footer-inner';
 
-    const copyright = sections.pop();
-    copyright.classList.add('section-copyright');
+  let legalSection = null;
+  const socialWrap = document.createElement('div');
+  socialWrap.className = 'footer-social';
+  const columnsWrap = document.createElement('div');
+  columnsWrap.className = 'footer-columns';
+  const brandWrap = document.createElement('div');
+  brandWrap.className = 'footer-brand';
 
-    const legal = sections.pop();
-    legal.classList.add('section-legal');
+  sections.forEach((sec) => {
+    const hasHeading = sec.querySelector('h3');
+    const imgs = sec.querySelectorAll('a img');
+    const hasCopyright = [...sec.querySelectorAll('p')].some((p) => /©/.test(p.textContent));
 
-    el.append(fragment);
-  } catch (e) {
-    throw Error(e);
+    if (hasCopyright) {
+      legalSection = sec;
+      return;
+    }
+    if (hasHeading) {
+      sec.classList.add('footer-column');
+      columnsWrap.append(sec);
+      return;
+    }
+    if (imgs.length === 1) {
+      sec.classList.add('footer-logo');
+      brandWrap.append(sec);
+      return;
+    }
+    if (imgs.length > 1) {
+      sec.querySelectorAll(':scope > p > a').forEach((a) => {
+        a.classList.add('footer-social-link');
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+        socialWrap.append(a);
+      });
+    }
+  });
+
+  brandWrap.append(socialWrap);
+  inner.append(brandWrap, columnsWrap);
+  top.append(inner);
+  el.append(top);
+
+  if (legalSection) {
+    legalSection.classList.add('footer-legal');
+    const legalInner = document.createElement('div');
+    legalInner.className = 'footer-legal-inner';
+    while (legalSection.firstChild) legalInner.append(legalSection.firstChild);
+    legalSection.append(legalInner);
+    el.append(legalSection);
   }
 }

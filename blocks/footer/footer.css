@@ -1,57 +1,158 @@
-footer {
-  a {
-    text-decoration: none;
-  }
-
-  .footer-content {
-    max-width: var(--grid-container-width);
-    margin: 48px auto;
-    font-size: 14px;
-  }
-
-  .section-legal ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .section-copyright p {
-    margin: 0;
-  }
-
-  .section {
-    .default-content {
-      max-width: initial;
-      margin: initial;
-    }
-  }
+/* Banner Health footer */
+footer.bh-footer {
+  background-color: #63666a;
+  color: #fff;
+  font-family: var(--font-family, "Trebuchet MS", sans-serif);
 }
 
-@media (width >= 900px) {
-  footer {
-    margin: 0;
+footer.bh-footer a {
+  color: #fff;
+  text-decoration: none;
+}
 
-    .section-legal {
-      display: flex;
-      justify-content: end;
-      gap: var(--spacing-xl);
-      margin-bottom: 24px;
+footer.bh-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
-      ul {
-        display: flex;
-        justify-content: end;
-        gap: var(--spacing-xl);
-      }
+/* ---- Top region ---- */
+.footer-top {
+  padding: 50px 30px;
+}
 
-      li {
-        margin: 0;
-      }
-    }
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  max-width: 1320px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
 
-    .section-copyright {
-      display: flex;
-      justify-content: end;
-      gap: var(--spacing-xl);
-    }
+.footer-brand {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.footer-logo img {
+  width: 180px;
+  height: auto;
+}
+
+.footer-social {
+  display: flex;
+  gap: 12px;
+}
+
+.footer-social-link {
+  display: inline-flex;
+}
+
+.footer-social-link img {
+  width: 32px;
+  height: 32px;
+  transition: opacity 0.2s ease;
+}
+
+.footer-social-link:hover img {
+  opacity: 0.75;
+}
+
+/* ---- Link columns ---- */
+.footer-columns {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: space-between;
+}
+
+.footer-column {
+  flex: 1;
+  min-width: 160px;
+}
+
+.footer-column h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.footer-column h3 a {
+  color: #fff;
+}
+
+.footer-column li {
+  margin-bottom: 10px;
+}
+
+.footer-column a {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.footer-column a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Legal bar ---- */
+.footer-legal {
+  border-top: 1px solid rgb(255 255 255 / 20%);
+}
+
+.footer-legal-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 16px 30px;
+  font-size: 13px;
+}
+
+.footer-legal-inner p {
+  margin: 0;
+}
+
+.footer-legal-inner a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Mobile ---- */
+@media (width < 768px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .footer-brand {
+    flex: 1 1 auto;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-social {
+    justify-content: center;
+  }
+
+  .footer-columns {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .footer-column {
+    min-width: 0;
+    border-top: 1px solid rgb(255 255 255 / 15%);
+    padding-top: 16px;
+  }
+
+  .footer-legal-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }

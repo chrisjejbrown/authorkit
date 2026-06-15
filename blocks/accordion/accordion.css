@@ -1,0 +1,81 @@
+.accordion {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.accordion .accordion-item {
+  border-bottom: 1px solid rgb(255 255 255 / 25%);
+}
+
+.accordion .accordion-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 20px 8px;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.accordion .accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion .accordion-summary::after {
+  content: '+';
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  margin-left: 16px;
+  transition: transform 0.2s ease;
+}
+
+.accordion .accordion-item[open] .accordion-summary::after {
+  content: '\2212'; /* minus */
+}
+
+.accordion .accordion-body {
+  padding: 0 8px 20px;
+}
+
+.accordion .accordion-body p {
+  margin: 0 0 12px;
+}
+
+.accordion .accordion-body ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.accordion .accordion-body li {
+  margin-bottom: 8px;
+}
+
+.accordion .accordion-body a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Source links inside the accordion carry Bootstrap btn/btn-primary classes
+   that the EDS button auto-block turns into solid (dark-on-dark) buttons. In
+   this context they are meant to be plain inline text links, so strip the
+   button chrome and keep them legible on the navy panel. */
+.accordion .accordion-body a.btn,
+.accordion .accordion-body a.btn-primary,
+.accordion .accordion-body a.btn-secondary,
+.accordion .accordion-body a.btn-accent {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: underline;
+}
+
+/* When placed on a navy section background, text is white. */
+.section.accordion-container,
+.accordion-wrapper {
+  color: inherit;
+}

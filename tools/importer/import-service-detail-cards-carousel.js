@@ -1,11 +1,13 @@
 /* eslint-disable */
 /* global WebImporter */
 
+import featureArticlesParser from "./parsers/feature-articles.js";
 import carouselParser from "./parsers/carousel.js";
 import cardsFeatureParser from "./parsers/cards-feature.js";
 import bannerhealthCleanupTransformer from './transformers/bannerhealth-cleanup.js';
 
 const parsers = {
+  "feature-articles": featureArticlesParser,
   "carousel": carouselParser,
   "cards-feature": cardsFeatureParser,
 };
@@ -17,9 +19,16 @@ const PAGE_TEMPLATE = {
   "description": "Service/content detail page with breadcrumbs, card grids, and a closing carousel",
   "urls": [
     "https://www.bannerhealth.com/es/medicare",
-    "https://www.bannerhealth.com/es/healthcareblog"
+    "https://www.bannerhealth.com/es/healthcareblog",
+    "https://www.bannerhealth.com/healthcareblog"
   ],
   "blocks": [
+    {
+      "name": "feature-articles",
+      "instances": [
+        ".text-card-feature-articles"
+      ]
+    },
     {
       "name": "carousel",
       "instances": [
@@ -37,7 +46,6 @@ const PAGE_TEMPLATE = {
         ".shell-card",
         ".text-card-circle-icon",
         ".text-card-full-width-image",
-        ".text-card-feature-articles",
         ".video-card-list",
         ".text-card-article-list-xs"
       ]

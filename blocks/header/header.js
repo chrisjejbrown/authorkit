@@ -1,197 +1,141 @@
-import { getConfig, getMetadata } from '../../scripts/ak.js';
-import { loadFragment } from '../fragment/fragment.js';
-import { setColorScheme } from '../section-metadata/section-metadata.js';
+// Banner Health header: utility bar (row 0) + main nav (row 1).
+// Content is authored in /content/nav.plain.html; this module reads that DOM,
+// builds the two rows, and wires interactive controls (search, hamburger).
 
-const { locale } = getConfig();
+const DESKTOP_MIN = 992;
 
-const HEADER_PATH = '/fragments/nav/header';
-const HEADER_ACTIONS = [
-  '/tools/widgets/scheme',
-  '/tools/widgets/language',
-  '/tools/widgets/toggle',
-];
-
-function closeAllMenus() {
-  const openMenus = document.body.querySelectorAll('header .is-open');
-  for (const openMenu of openMenus) {
-    openMenu.classList.remove('is-open');
+async function fetchNav() {
+  let resp = await fetch('/content/nav.plain.html');
+  if (!resp.ok) {
+    const navPath = '/nav';
+    resp = await fetch(`${navPath}.plain.html`);
   }
+  if (!resp.ok) return null;
+  const html = await resp.text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.querySelector('main') || doc.body;
 }
 
-function docClose(e) {
-  if (e.target.closest('header')) return;
-  closeAllMenus();
-}
-
-function toggleMenu(menu) {
-  const isOpen = menu.classList.contains('is-open');
-  closeAllMenus();
-  if (isOpen) {
-    document.removeEventListener('click', docClose);
-    return;
-  }
-
-  // Setup the global close event
-  document.addEventListener('click', docClose);
-  menu.classList.add('is-open');
-}
-
-function decorateLanguage(btn) {
-  const section = btn.closest('.section');
-  btn.addEventListener('click', async () => {
-    let menu = section.querySelector('.language.menu');
-    if (!menu) {
-      const content = document.createElement('div');
-      content.classList.add('block-content');
-      const fragment = await loadFragment(`${locale.prefix}${HEADER_PATH}/languages`);
-      menu = document.createElement('div');
-      menu.className = 'language menu';
-      menu.append(fragment);
-      content.append(menu);
-      section.append(content);
-    }
-    toggleMenu(section);
-  });
-}
-
-function decorateScheme(btn) {
-  btn.addEventListener('click', async () => {
-    const { body } = document;
-
-    let currPref = localStorage.getItem('color-scheme');
-    if (!currPref) {
-      currPref = matchMedia('(prefers-color-scheme: dark)')
-        .matches ? 'dark-scheme' : 'light-scheme';
-    }
-
-    const theme = currPref === 'dark-scheme'
-      ? { add: 'light-scheme', remove: 'dark-scheme' }
-      : { add: 'dark-scheme', remove: 'light-scheme' };
-
-    body.classList.remove(theme.remove);
-    body.classList.add(theme.add);
-    localStorage.setItem('color-scheme', theme.add);
-    // Re-calculatie section schemes
-    const sections = document.querySelectorAll('.section');
-    for (const section of sections) {
-      setColorScheme(section);
-    }
-  });
-}
-
-function decorateNavToggle(btn) {
-  btn.addEventListener('click', () => {
-    const header = document.body.querySelector('header');
-    if (header) header.classList.toggle('is-mobile-open');
-  });
-}
-
-async function decorateAction(header, pattern) {
-  const link = header.querySelector(`[href*="${pattern}"]`);
-  if (!link) return;
-
-  const icon = link.querySelector('.icon');
-  const text = link.textContent;
+function buildSearchButton() {
   const btn = document.createElement('button');
-  if (icon) btn.append(icon);
-  if (text) {
-    const textSpan = document.createElement('span');
-    textSpan.className = 'text';
-    textSpan.textContent = text;
-    btn.append(textSpan);
+  btn.type = 'button';
+  btn.className = 'nav-search-toggle';
+  btn.setAttribute('aria-label', 'Search');
+  btn.innerHTML = '<span class="nav-icon nav-icon-search" aria-hidden="true"></span><span class="nav-search-label">Search</span>';
+  btn.addEventListener('click', () => {
+    document.querySelector('header').classList.toggle('search-open');
+  });
+  return btn;
+}
+
+function buildHamburger() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nav-hamburger';
+  btn.setAttribute('aria-label', 'Open menu');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = '<span class="nav-hamburger-bar"></span><span class="nav-hamburger-bar"></span><span class="nav-hamburger-bar"></span>';
+  btn.addEventListener('click', () => {
+    const header = document.querySelector('header');
+    const open = header.classList.toggle('is-mobile-open');
+    btn.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+  return btn;
+}
+
+// Build a <ul> of links from a flat content section's <p><a> children.
+function linkListFromSection(section) {
+  const ul = document.createElement('ul');
+  section.querySelectorAll(':scope > p > a').forEach((a) => {
+    const li = document.createElement('li');
+    li.append(a);
+    ul.append(li);
+  });
+  return ul;
+}
+
+function buildUtilityRow(section) {
+  const row = document.createElement('div');
+  row.className = 'nav-utility';
+  const inner = document.createElement('div');
+  inner.className = 'nav-utility-inner';
+
+  const links = linkListFromSection(section);
+  links.classList.add('nav-utility-links');
+
+  // The account link (last item, has an image) moves to the right group.
+  const tools = document.createElement('div');
+  tools.className = 'nav-utility-tools';
+  tools.append(buildSearchButton());
+  const accountItem = [...links.children].find((li) => li.querySelector('img'));
+  if (accountItem) {
+    accountItem.classList.add('nav-account');
+    tools.append(accountItem);
   }
-  const wrapper = document.createElement('div');
-  wrapper.className = `action-wrapper ${icon.classList[1].replace('icon-', '')}`;
-  wrapper.append(btn);
-  link.parentElement.parentElement.replaceChild(wrapper, link.parentElement);
 
-  if (pattern === '/tools/widgets/language') decorateLanguage(btn);
-  if (pattern === '/tools/widgets/scheme') decorateScheme(btn);
-  if (pattern === '/tools/widgets/toggle') decorateNavToggle(btn);
+  inner.append(links, tools);
+  row.append(inner);
+  return row;
 }
 
-function decorateMenu() {
-  // TODO: finish single menu support
-  return null;
+function buildMainRow(section) {
+  const row = document.createElement('div');
+  row.className = 'nav-main';
+  const inner = document.createElement('div');
+  inner.className = 'nav-main-inner';
+
+  // First link is the logo (contains an <img>).
+  const links = linkListFromSection(section);
+  const logoItem = [...links.children].find((li) => li.querySelector('img'));
+  const brand = document.createElement('div');
+  brand.className = 'nav-brand';
+  if (logoItem) {
+    const logoLink = logoItem.querySelector('a');
+    brand.append(logoLink);
+    logoItem.remove();
+  }
+
+  links.classList.add('nav-main-links');
+
+  // The CTA (last link, /get-care-now) gets button styling.
+  const items = [...links.children];
+  const cta = items[items.length - 1];
+  if (cta && cta.querySelector('a[href*="get-care-now"]')) {
+    cta.classList.add('nav-cta');
+  }
+
+  const navEl = document.createElement('nav');
+  navEl.setAttribute('aria-label', 'Main navigation');
+  navEl.append(links);
+
+  inner.append(brand, navEl, buildHamburger());
+  row.append(inner);
+  return row;
 }
 
-function decorateMegaMenu(li) {
-  const menu = li.querySelector('.fragment-content');
-  if (!menu) return null;
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mega-menu';
-  wrapper.append(menu);
-  li.append(wrapper);
-  return wrapper;
-}
-
-function decorateNavItem(li) {
-  li.classList.add('main-nav-item');
-  const link = li.querySelector(':scope > p > a');
-  if (link) link.classList.add('main-nav-link');
-  const menu = decorateMegaMenu(li) || decorateMenu(li);
-  if (!(menu || link)) return;
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    toggleMenu(li);
+function handleResize() {
+  const mq = window.matchMedia(`(min-width: ${DESKTOP_MIN}px)`);
+  mq.addEventListener('change', (e) => {
+    if (e.matches) {
+      const header = document.querySelector('header');
+      header.classList.remove('is-mobile-open', 'search-open');
+      const burger = header.querySelector('.nav-hamburger');
+      if (burger) {
+        burger.setAttribute('aria-expanded', 'false');
+        burger.setAttribute('aria-label', 'Open menu');
+      }
+    }
   });
 }
 
-function decorateBrandSection(section) {
-  section.classList.add('brand-section');
-  const brandLink = section.querySelector('a');
-  const [, text] = brandLink.childNodes;
-  const span = document.createElement('span');
-  span.className = 'brand-text';
-  span.append(text);
-  brandLink.append(span);
-}
-
-function decorateNavSection(section) {
-  section.classList.add('main-nav-section');
-  const navContent = section.querySelector('.default-content');
-  const navList = section.querySelector('ul');
-  if (!navList) return;
-  navList.classList.add('main-nav-list');
-
-  const nav = document.createElement('nav');
-  nav.append(navList);
-  navContent.append(nav);
-
-  const mainNavItems = section.querySelectorAll('nav > ul > li');
-  for (const navItem of mainNavItems) {
-    decorateNavItem(navItem);
-  }
-}
-
-async function decorateActionSection(section) {
-  section.classList.add('actions-section');
-}
-
-async function decorateHeader(fragment) {
-  const sections = fragment.querySelectorAll(':scope > .section');
-  if (sections[0]) decorateBrandSection(sections[0]);
-  if (sections[1]) decorateNavSection(sections[1]);
-  if (sections[2]) decorateActionSection(sections[2]);
-
-  for (const pattern of HEADER_ACTIONS) {
-    decorateAction(fragment, pattern);
-  }
-}
-
-/**
- * loads and decorates the header
- * @param {Element} el The header element
- */
 export default async function init(el) {
-  const headerMeta = getMetadata('header');
-  const path = headerMeta || HEADER_PATH;
-  try {
-    const fragment = await loadFragment(`${locale.prefix}${path}`);
-    fragment.classList.add('header-content');
-    await decorateHeader(fragment);
-    el.append(fragment);
-  } catch (e) {
-    throw Error(e);
-  }
+  const nav = await fetchNav();
+  if (!nav) return;
+  const sections = nav.querySelectorAll(':scope > div');
+  el.textContent = '';
+  el.classList.add('bh-header');
+  if (sections[0]) el.append(buildUtilityRow(sections[0]));
+  if (sections[1]) el.append(buildMainRow(sections[1]));
+  handleResize();
 }

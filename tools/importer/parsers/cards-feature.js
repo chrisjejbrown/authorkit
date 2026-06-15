@@ -4,31 +4,42 @@
  * Parser for cards-feature. Base block: cards.
  * Source: https://www.bannerhealth.com/ (homepage template)
  * Generated: 2026-06-12
+ * Re-architected: 2026-06-13
  *
  * This variant covers several distinct source card/promo containers that all
- * render as a single cards (feature) block. Each card becomes one row:
- *   - Optional leading image cell.
- *   - Body cell: heading + descriptive text/lists + optional CTA link(s).
+ * render as a single cards (feature) block.
  *
- * Handled source structures (selectors from page-templates.json instances[]):
- *   .video-card-v2          -> h1.video-title + .bh-side-by-side-buttons a, image in .background-image-without-text img
- *   .text-card (simple)     -> .card-body (optional heading, .card-text, links/iframe), no image
- *   .text-card (row)        -> .text-card-image img + nested .image-text-card-body body
- *   .image-text-card-body   -> .card-title + .card-text + .text-card-left-button a
- *   .basic-list-card        -> .card-title + text block + CTA button, no image
- *   .shell-card             -> .shell-card-title + .shell-card-text + .shell-card-image img (or kyruus title-only)
- *   .text-card-circle-icon  -> .icon img + .card-body (h3 + text + link) icon-grid item
- *   .list-card              -> .list-card-header (heading + sub-heading) + grid of .card-item
- *                              stat cards (icon + h3 [+ text]); one row per card
- *   .list-text-card-link    -> .list-card-header heading + grid of <a.text-card-link>
- *                              (title + content + the link href as CTA); one row per link card
- *   .text-card-full-width-image -> full-width promo band: leading <img> (+ optional heading/text/CTA)
+ * 🔵 OUTPUT SHAPE (one row per card, two cells per card):
+ *   The block JS (blocks/cards-feature/cards-feature.js) turns EACH block ROW into
+ *   one <li> (one grid cell), and inside that <li> classes a single-<picture> child
+ *   div as `.cards-feature-card-image` and any other child div as
+ *   `.cards-feature-card-body`. Therefore every card MUST be ONE row containing TWO
+ *   cells: [ imageNode, bodyNodes ] — image first, body second — so the image stacks
+ *   above the body within ONE grid cell. When a card has no image, push a single-cell
+ *   row [ bodyNodes ]. (Previously the parser pushed image and body as TWO separate
+ *   rows, which produced two side-by-side grid cells per card — fixed here.)
  *
- * The .text-card "row" form contains a nested .image-text-card-body that is ALSO
- * matched by its own selector. To avoid double-extraction, when an element is a
- * .text-card row that wraps an .image-text-card-body we build the row from the
- * image + nested body here, and the standalone .image-text-card-body branch only
- * runs when the body is not already wrapped by a handled .text-card row.
+ * 🔵 GRID GROUPING (one block per grid, one row per card):
+ *   The import script invokes parse() once per matched card element. A responsive grid
+ *   of N same-type cards must become ONE cards-feature block with N rows (not N blocks).
+ *   Banner Health builds grids with the Bootstrap pattern:
+ *       div.row > [class*="col-"] (column wrapper) > div.card.<card-type>
+ *   so a "grid" is detected as: the card sits inside a column wrapper ([class*="col-"])
+ *   whose parent is a .row, and that .row contains 2+ cards matching the SAME selector
+ *   the matched element matches. (Verified on the live homepage: the 8 service cards are
+ *   8 .text-card-circle-icon inside 8 col-lg-3 wrappers under one div.row inside
+ *   div.list-card-icon. Standalone promos — video-card-v2, the WebMD/symptom basic-list
+ *   cards, the shell cards — are NOT inside a col-* / .row grid, so they stay one-row
+ *   blocks even though several share a distant page-stack ancestor.)
+ *
+ *   When parse() runs on a card that IS part of such a grid:
+ *     - if it is NOT the first same-type card in that .row, return early (the first
+ *       sibling absorbs the whole grid);
+ *     - if it IS the first, collect ALL same-type cards in the .row, emit ONE block
+ *       with one row per card, and replaceWith() on the .row container so the other
+ *       siblings are detached. The import script will still call parse() on those
+ *       detached siblings later — the `element.isConnected === false` guard at the top
+ *       skips them safely.
  *
  * 🔴 HierarchyRequestError avoidance: on this template the source HTML is malformed
  * (many unclosed <div>/<img> tags), so the browser nests several separately-matched
@@ -36,18 +47,17 @@
  * .text-card-circle-icon, .text-card, .list-text-card-link) INSIDE a .list-card.
  * If a branch put the live `element` (or a live ancestor) into a cell and then called
  * element.replaceWith(block), the new block would contain its own parent -> the DOM
- * throws "HierarchyRequestError: ... child contains the parent". The .list-card,
- * .list-text-card-link and .text-card-full-width-image branches therefore extract
- * ONLY detached clones (cloneNode) of the specific sub-content they own; they never
- * reference the live element or its live descendants. The .list-card branch also
- * scopes extraction to its OWN header + direct stat .card-item cards so it does not
- * re-wrap nested matched containers that have their own branches/replacements.
+ * throws "HierarchyRequestError: ... child contains the parent". Branches that own
+ * nested matched containers (.list-card, .list-text-card-link, .text-card-full-width-image,
+ * .text-card-feature-articles, .video-card-list, .text-card-article-list-xs) therefore
+ * extract ONLY detached clones (cloneNode) of the specific sub-content they own; they
+ * never reference the live element or its live descendants.
  */
 export default function parse(element, { document }) {
   // A previously-processed outer card may have been replaced, detaching this element
   // from the live tree. replaceWith() on a detached node (or one whose parent now lives
   // inside a freshly built block) throws HierarchyRequestError. Skip it — its content
-  // was already captured by the ancestor card that carried it.
+  // was already captured by the ancestor card (or grid) that carried it.
   if (element.isConnected === false) {
     return;
   }
@@ -81,8 +91,9 @@ export default function parse(element, { document }) {
   };
 
   // Collect descriptive content nodes (headings, paragraphs, lists) + CTA links into ONE
-  // body cell. Each card row has at most two cells: optional image, then this body cell.
-  // Empty nodes (e.g. placeholder <p class="card-text"></p>) are dropped.
+  // body array. Each card row is [optionalImageCell, bodyCell]; the body cell stacks all
+  // these nodes in one column. Empty nodes (e.g. placeholder <p class="card-text"></p>)
+  // are dropped.
   const collectBody = (root, headingSel, textSel, ctaSel) => {
     const body = [];
     if (headingSel) {
@@ -102,9 +113,21 @@ export default function parse(element, { document }) {
     return body;
   };
 
-  // Wrap the collected body nodes as a single cell so they render stacked in one column
-  // (matching the library example), instead of one column per node.
-  const bodyCell = (body, fallback) => (body.length ? [body] : [[clone(fallback)]]);
+  // Build ONE card row from an (optional) image node and a body-nodes array.
+  // - With an image: a single row of TWO cells [imageNode, bodyNodes] so the JS classes
+  //   the image div as .cards-feature-card-image and the body div as
+  //   .cards-feature-card-body, stacked within one <li>/grid cell.
+  // - Without an image: a single one-cell row [bodyNodes].
+  // `fallback` is cloned into the body cell when the body is empty so a card never
+  // produces an empty cell.
+  const pushCardRow = (image, body, fallback) => {
+    const bodyNodes = body && body.length ? body : [clone(fallback)];
+    if (image) {
+      cells.push([image, bodyNodes]);
+    } else {
+      cells.push([bodyNodes]);
+    }
+  };
 
   // Make a URL absolute against the page origin. Banner Health frequently emits
   // root-relative image URLs (e.g. "/healthcareblog/-/media/...") which must be
@@ -171,9 +194,6 @@ export default function parse(element, { document }) {
   // article markup (eyebrow / title-link / date). All nodes are freshly created and
   // detached so the block never references the live `element` or a live descendant
   // (these containers are nested into one another by the malformed source markup).
-  // - eyebrowSel: optional category eyebrow (text or a link)
-  // - titleSel: the title link (becomes a linked <h3> heading)
-  // - dateSel: optional published date (rendered as a paragraph)
   const articleBody = (root, { eyebrowSel, titleSel, dateSel }) => {
     const body = [];
     if (eyebrowSel) {
@@ -214,50 +234,78 @@ export default function parse(element, { document }) {
     return body;
   };
 
-  // .list-card: a card-grid container with a header (heading + sub-heading) and a grid
-  // of stat .card-item cards (circle icon + h3 [+ description text]). Emit ONE cards-feature
-  // block: a header row (heading + sub-heading) followed by one row per stat card
-  // (icon image + h3 heading + any non-empty description text).
-  // NOTE: on this template .list-card frequently NESTS other separately-matched containers
-  // (.basic-list-card, .text-card-full-width-image, .list-card-icon, .text-card-circle-icon,
-  // .text-card, .list-text-card-link) because of malformed/unclosed source markup. We must
-  // NOT re-wrap those here, and we must NOT put any live ancestor of `element` into a cell.
-  // So: scope to the header and to the stat cards under THIS list-card's first
-  // .content-container, and place only detached clones into the cells.
-  // .text-card-feature-articles: a featured-articles grid (1 medium + N small
-  // div.text-card-feature-article cards). Each article card = image + category eyebrow
-  // + title link. Emit ONE cards-feature block, one row per article card
-  // (image cell + body cell). The source markup is malformed (cards nest inside each
-  // other via unclosed <div>/<img>), so we query ALL .text-card-feature-article cards
-  // and rebuild each from detached clones/new nodes — the live element is never reused.
-  if (element.matches('.text-card-feature-articles')) {
-    const articles = Array.from(element.querySelectorAll('.text-card-feature-article'));
-    articles.forEach((card) => {
-      // Scope image/eyebrow/title to THIS card's own .text-card-feature-article-info and
-      // direct <img>, not to a nested child card (which has its own row).
-      const info = card.querySelector(':scope > .text-card-feature-article-info, .text-card-feature-article-info');
-      // Image is either a child <img> (snapshot markup) or a background-image on the
-      // card container itself (live markup, root-relative URL).
-      const img = resolveImage(card.querySelector(':scope > img, img'), card);
-      const body = articleBody(info || card, {
-        eyebrowSel: '.text-card-feature-article-eyebrow',
-        titleSel: '.text-card-feature-article-title a, a.text-card-feature-article-button',
-        dateSel: '.text-card-feature-article-date',
-      });
-      if (img) cells.push([img]);
-      if (body.length) cells.push([body]);
+  // ──────────────────────────────────────────────────────────────────────────────
+  // GRID GROUPING for the leaf "single card" branches
+  // (.text-card-circle-icon, .text-card, .basic-list-card, .video-card-v2,
+  //  .shell-card, .icon-shell-card).
+  //
+  // Banner Health lays out card grids as: div.row > [class*="col-"] > div.card.<type>.
+  // gridSiblings(element, sameSel) returns the ordered list of same-type cards in the
+  // matched card's grid .row, or null when the card is NOT part of such a grid (a
+  // standalone promo). A grid requires:
+  //   1. the card sits inside a column wrapper ([class*="col-"]),
+  //   2. whose parent is a .row,
+  //   3. and that .row contains 2+ cards matching `sameSel`.
+  // This deliberately does NOT group standalone promos that merely share a distant
+  // page-stack ancestor (they have no col-*/.row wrapper), so each stays a one-row block.
+  const gridSiblings = (el, sameSel) => {
+    const colWrap = el.closest('[class*="col-"]');
+    if (!colWrap) return null;
+    const row = colWrap.parentElement;
+    if (!row || !row.matches || !row.matches('.row')) return null;
+    const siblings = Array.from(row.querySelectorAll(sameSel)).filter((c) => {
+      // Only same-type cards that live in a direct column child of THIS row (avoid
+      // accidentally pulling in a nested card from a deeper structure).
+      const w = c.closest('[class*="col-"]');
+      return w && w.parentElement === row;
     });
-    if (!cells.length) cells.push([[clone(element)]]);
-    const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
-    element.replaceWith(block);
-    return;
-  }
+    return siblings.length >= 2 ? siblings : null;
+  };
 
-  // .video-card-list: "Nuestros últimos videos" video gallery. A sidebar heading
-  // (.video-card-list-heading) + a grid of .video-card-list-card items (each: optional
-  // eyebrow, a title, and a play thumbnail image). Emit ONE cards-feature block: a
-  // header row with the heading, then one row per video card (thumbnail image cell +
-  // body cell with the video title). All nodes are freshly created/cloned detached.
+  // Emit ONE cards-feature block for a grid of same-type cards. Only the FIRST card calls
+  // this. `buildCard(card)` returns { image, body } for one card; each sibling becomes one
+  // row [image, body] (or [body]), all from detached clones.
+  //
+  // The import harness collects every matched card up front, then calls parse() on each in
+  // turn against ONE shared live DOM. So the FIRST card must consume the WHOLE grid in one
+  // pass and DETACH the other sibling cards, otherwise each later sibling would re-run
+  // gridSiblings (now believing it is the first remaining card) and re-emit the grid.
+  // We therefore:
+  //   - build ONE block (one row per card) and replace the first card (`element`) with it;
+  //   - replace EACH other sibling card with an empty <div>, fully detaching the original
+  //     sibling node. When the harness later parses those detached originals, the
+  //     `element.isConnected === false` guard at the top of parse() skips them and the
+  //     harness (which reads each element's parent/nextSibling at parse time, both null for
+  //     a detached node) produces no output for them.
+  // Detaching the original sibling node (not just an ancestor wrapper) is important: a
+  // half-detached node with a live parent made the harness fall back to rendering raw card
+  // content in an earlier iteration.
+  const emitGrid = (siblings, buildCard) => {
+    siblings.forEach((card) => {
+      const { image, body, fallback } = buildCard(card);
+      pushCardRow(image, body, fallback || card);
+    });
+    if (!cells.length) cells.push([[clone(siblings[0])]]);
+    const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
+    // Detach the other siblings first (replace each with an empty placeholder), then
+    // replace the first card with the single grid block.
+    siblings.forEach((card) => {
+      if (card === element) return;
+      if (card.isConnected) card.replaceWith(document.createElement('div'));
+    });
+    element.replaceWith(block);
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // CONTAINER branches (each owns an internal grid of sub-cards and emits ONE block).
+  // These are not themselves repeated as same-type cards in a .row, so they are handled
+  // directly (no gridSiblings grouping). Each sub-card is one row [image, body].
+
+  // NOTE: .text-card-feature-articles is handled by the dedicated
+  // feature-articles parser/block (overlay-text mosaic), not here.
+
+  // .video-card-list: video gallery. Sidebar heading + grid of .video-card-list-card
+  // items (thumbnail + title). Header row, then one row per video card (image + body).
   if (element.matches('.video-card-list')) {
     const heading = element.querySelector('.video-card-list-heading, h2');
     if (heading && hasContent(heading)) {
@@ -267,10 +315,6 @@ export default function parse(element, { document }) {
     }
     const videos = Array.from(element.querySelectorAll('.video-card-list-card'));
     videos.forEach((card) => {
-      // The card's only <img> is an inline SVG play-button data-URI (not a real thumbnail).
-      // Each card instead exposes the video via data attributes: a YouTube id (data-yt),
-      // the article link (data-article-link), and placeholder alt text. Build a real
-      // thumbnail from the YouTube id when available.
       const ytId = card.getAttribute('data-yt');
       const articleLink = card.getAttribute('data-article-link');
       const placeholderAlt = card.getAttribute('data-placeholder-image') || '';
@@ -302,8 +346,7 @@ export default function parse(element, { document }) {
         }
         body.push(h);
       }
-      if (img) cells.push([img]);
-      if (body.length) cells.push([body]);
+      if (img || body.length) pushCardRow(img, body, card);
     });
     if (!cells.length) cells.push([[clone(element)]]);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
@@ -311,10 +354,8 @@ export default function parse(element, { document }) {
     return;
   }
 
-  // .text-card-article-list-xs: a grid of small .text-card-article-card.x-small-card
-  // articles (image + title link; no per-card date, list-level eyebrow only). Emit ONE
-  // cards-feature block: optional header row from the list eyebrow, then one row per
-  // article (image cell + body cell with the title as a linked heading). All detached.
+  // .text-card-article-list-xs: grid of small article cards (image + title link).
+  // Optional list-eyebrow header row, then one row per article (image + body).
   if (element.matches('.text-card-article-list-xs')) {
     const listEyebrow = element.querySelector('.text-card-article-list-xs-eyebrow');
     const eyebrowText = listEyebrow && (listEyebrow.textContent || '').trim();
@@ -325,8 +366,6 @@ export default function parse(element, { document }) {
     }
     const cards = Array.from(element.querySelectorAll('.text-card-article-card'));
     cards.forEach((card) => {
-      // Image: child <img> (snapshot) or background-image on .text-card-article-card-image
-      // (live markup, root-relative URL).
       const imageWrap = card.querySelector('.text-card-article-card-image');
       const img = resolveImage(card.querySelector('.text-card-article-card-image img, img'), imageWrap);
       const body = articleBody(card, {
@@ -334,8 +373,7 @@ export default function parse(element, { document }) {
         titleSel: '.text-card-article-card-title a, .text-card-article-card-title-link',
         dateSel: '.text-card-article-card-date',
       });
-      if (img) cells.push([img]);
-      if (body.length) cells.push([body]);
+      if (img || body.length) pushCardRow(img, body, card);
     });
     if (!cells.length) cells.push([[clone(element)]]);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
@@ -343,13 +381,9 @@ export default function parse(element, { document }) {
     return;
   }
 
-  // .icon-shell-card: a newsletter signup card (sibling/variant of .shell-card). It has a
-  // heading (.icon-shell-card-title) + supporting text (.text-header span) + an email
-  // signup form. This is a "da" content import without a real form block, so the form is
-  // represented as a simple placeholder text cell. The source markup is malformed and the
-  // page <footer> ends up NESTED inside this card, so we scope extraction strictly to the
-  // card's own .text-header and .input-wrapper and rebuild from detached clones/new nodes —
-  // we never reference the live element (whose live descendants include the footer).
+  // .icon-shell-card: a newsletter signup card. Single body cell (no image). Scope
+  // extraction strictly to the card's own .text-header / .input-wrapper (the page
+  // <footer> can be nested inside this card via malformed markup).
   if (element.matches('.icon-shell-card')) {
     const body = [];
     const textHeader = element.querySelector('.text-header');
@@ -360,7 +394,6 @@ export default function parse(element, { document }) {
       h.textContent = titleText;
       body.push(h);
     }
-    // Supporting text: the span (or paragraph) directly inside the card's text header.
     const support = textHeader
       ? textHeader.querySelector('span, p')
       : element.querySelector(':scope span, :scope p');
@@ -370,61 +403,57 @@ export default function parse(element, { document }) {
       p.textContent = supportText;
       body.push(p);
     }
-    // Email form placeholder (no real form block in this "da" import). Use the form's
-    // button label if available, scoped to the card's own .input-wrapper.
     const wrapper = element.querySelector('.input-wrapper');
     const btn = wrapper && wrapper.querySelector('button, .btn');
     const btnLabel = (btn && (btn.textContent || '').trim()) || 'Sign up';
     const placeholder = document.createElement('p');
     placeholder.textContent = `Email signup: enter your email address and select “${btnLabel}”.`;
     body.push(placeholder);
-    cells.push(body.length ? [body] : [['']]);
+    // No image: single one-cell row.
+    pushCardRow(null, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
   }
 
+  // .list-card: a card-grid container with a header + a grid of stat .card-item cards.
+  // Header row, then one row per stat card (icon image + body). Scope strictly to this
+  // list-card's own header and stat cards; place only detached clones into cells so
+  // replaceWith never creates a parent/child cycle (nested matched containers exist).
   if (element.matches('.list-card')) {
     const header = element.querySelector('.list-card-header');
     if (header && hasContent(header)) cells.push([[clone(header)]]);
 
-    // Stat cards live directly in this list-card's primary content grid. Restrict to
-    // .card-item that are NOT inside a nested matched container (those have their own branch).
     const grid = element.querySelector(':scope > .container > .content-container, :scope .content-container');
     const items = grid
       ? Array.from(grid.querySelectorAll('.card-item')).filter((item) => {
           const owner = item.closest(
             '.basic-list-card, .text-card-full-width-image, .list-card-icon, .text-card-circle-icon, .text-card, .list-text-card-link',
           );
-          // Keep only stat cards owned by this list-card grid (not by a nested container).
           return !owner || !element.contains(owner) || owner === element;
         })
       : [];
     items.forEach((item) => {
-      const icon = item.querySelector('.icon-circle img, .icon img, img');
+      const icon = resolveImage(item.querySelector('.icon-circle img, .icon img, img'), item)
+        || (item.querySelector('.icon-circle img, .icon img, img') ? clone(item.querySelector('.icon-circle img, .icon img, img')) : null);
       const body = [];
       const heading = item.querySelector('.card-body h3, h3, [class*="heading"]');
       if (heading && hasContent(heading)) body.push(clone(heading));
       item.querySelectorAll('.card-body > p, .card-text').forEach((p) => {
         if (hasContent(p)) body.push(clone(p));
       });
-      if (icon) cells.push([clone(icon)]);
-      cells.push(body.length ? [body] : [['']]);
+      pushCardRow(icon, body, item);
     });
 
-    // If no header and no stat cards were found, fall back to a single detached clone.
     if (!cells.length) cells.push([[clone(element)]]);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
   }
 
-  // .list-text-card-link: a "Learn more" link-card grid. Header (heading) + a grid of
-  // <a class="text-card-link"> link cards, each with .text-card-link-title and
-  // .text-card-link-content. Emit ONE cards-feature block: optional header row, then one
-  // row per link card. Each link-card body = title (as heading) + content text + a CTA
-  // link whose href is the card's <a href>. All content is cloned/created detached so the
-  // block never references the live element (which may be a nested descendant elsewhere).
+  // .list-text-card-link: a "Learn more" link-card grid. Optional header row, then one
+  // row per link card (no image): title heading + content text + a CTA pointing at the
+  // card's href. All content cloned/created detached.
   if (element.matches('.list-text-card-link')) {
     const header = element.querySelector('.list-card-header');
     if (header && hasContent(header)) cells.push([[clone(header)]]);
@@ -435,13 +464,11 @@ export default function parse(element, { document }) {
       const title = link.querySelector('.text-card-link-title');
       const content = link.querySelector('.text-card-link-content');
       if (title && hasContent(title)) {
-        // Promote the title to a heading for the card body.
         const h = document.createElement('h3');
         h.textContent = (title.textContent || '').trim();
         body.push(h);
       }
       if (content && hasContent(content)) body.push(clone(content));
-      // Rebuild the CTA as a fresh detached anchor pointing at the link's href.
       const href = link.getAttribute('href');
       if (href) {
         const cta = document.createElement('a');
@@ -450,7 +477,7 @@ export default function parse(element, { document }) {
         cta.textContent = label;
         body.push(cta);
       }
-      if (body.length) cells.push([body]);
+      if (body.length) pushCardRow(null, body, link);
     });
 
     if (!cells.length) cells.push([[clone(element)]]);
@@ -459,13 +486,11 @@ export default function parse(element, { document }) {
     return;
   }
 
-  // .text-card-full-width-image: a full-width promo band. On this template it carries
-  // only a leading <img>; defensively also pick up an optional heading/text/CTA if present.
-  // The image (and any body content) is cloned detached so replaceWith cannot create a
-  // parent/child cycle when this band is nested inside a .list-card.
+  // .text-card-full-width-image: a full-width promo band (leading <img> + optional
+  // heading/text/CTA). One row [image, body] (or [body]). Cloned detached.
   if (element.matches('.text-card-full-width-image')) {
     const image = element.querySelector('img');
-    if (image) cells.push([clone(image)]);
+    const imgClone = image ? clone(image) : null;
     const body = [];
     const heading = element.querySelector('h1, h2, h3, [class*="heading"], .card-title');
     if (heading && hasContent(heading)) body.push(clone(heading));
@@ -473,30 +498,51 @@ export default function parse(element, { document }) {
       if (hasContent(p)) body.push(clone(p));
     });
     element.querySelectorAll('a.btn, a[class*="button"]').forEach((a) => body.push(clone(a)));
-    if (body.length) cells.push([body]);
+    if (imgClone || body.length) pushCardRow(imgClone, body, element);
     if (!cells.length) cells.push([[clone(element)]]);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
   }
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // LEAF "single card" branches — each card is one row [image, body] (or [body]).
+  // These participate in GRID GROUPING: if the matched card is part of a Bootstrap
+  // .row grid of 2+ same-type cards, the first sibling emits ONE block with one row per
+  // card and replaceWith() on the .row; later siblings are skipped via isConnected.
+
   // .text-card-circle-icon: icon image + body (h3 heading, text, link)
   if (element.matches('.text-card-circle-icon')) {
     // Malformed source markup can nest a bare .text-card-circle-icon inside another
-    // matched .text-card-circle-icon card. Skip the inner phantom so we don't build a
-    // block that contains its own ancestor (HierarchyRequestError on replaceWith).
+    // matched .text-card-circle-icon card. Skip the inner phantom.
     if (element.parentElement && element.parentElement.closest('.text-card-circle-icon')) {
       return;
     }
-    const icon = element.querySelector('.icon img, img');
-    const body = collectBody(
-      element,
-      'h3, .card-body h3, [class*="heading"]',
-      '.card-body > p, .card-text',
-      '.card-body a',
-    );
-    if (icon) cells.push([icon.cloneNode(true)]);
-    cells.push(bodyCell(body, element));
+    const buildCard = (card) => {
+      const iconNode = card.querySelector('.icon img, img');
+      const image = iconNode ? clone(iconNode) : null;
+      // The CTA "Learn more." link lives INSIDE the descriptive <p>, so it is captured by
+      // the text selector — do NOT also collect it via a separate CTA selector (that would
+      // duplicate the link in the body cell).
+      const body = collectBody(
+        card,
+        'h3, .card-body h3, [class*="heading"]',
+        '.card-body > p, .card-text',
+        null,
+      ).map((n) => clone(n));
+      return { image, body };
+    };
+    const siblings = gridSiblings(element, '.text-card-circle-icon');
+    if (siblings) {
+      // Only the first sibling builds the whole grid (and detaches the rest). When the
+      // harness later parses a now-detached sibling, the isConnected guard at top skips it.
+      if (element !== siblings[0]) return;
+      emitGrid(siblings, buildCard);
+      return;
+    }
+    // Standalone circle-icon card -> one-row block.
+    const { image, body } = buildCard(element);
+    pushCardRow(image, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
@@ -504,6 +550,24 @@ export default function parse(element, { document }) {
 
   // .video-card-v2: heading + CTA button, optional image
   if (element.matches('.video-card-v2')) {
+    const buildCard = (card) => {
+      const imgNode = card.querySelector('.background-image-without-text img, img');
+      const image = imgNode ? clone(imgNode) : null;
+      const body = collectBody(
+        card,
+        '.video-title, h1, h2',
+        null,
+        '.bh-side-by-side-buttons a, a.btn',
+      ).map((n) => clone(n));
+      return { image, body };
+    };
+    const siblings = gridSiblings(element, '.video-card-v2');
+    if (siblings) {
+      if (element !== siblings[0]) return;
+      emitGrid(siblings, buildCard);
+      return;
+    }
+    // Standalone: reference live nodes directly (no nesting concern here).
     const image = element.querySelector('.background-image-without-text img, img');
     const body = collectBody(
       element,
@@ -511,8 +575,7 @@ export default function parse(element, { document }) {
       null,
       '.bh-side-by-side-buttons a, a.btn',
     );
-    if (image) cells.push([image]);
-    cells.push(bodyCell(body, element));
+    pushCardRow(image, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
@@ -526,7 +589,7 @@ export default function parse(element, { document }) {
       '.card-text',
       '.text-card-left-button a, a.btn',
     );
-    cells.push(bodyCell(body, element));
+    pushCardRow(null, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
@@ -534,17 +597,35 @@ export default function parse(element, { document }) {
 
   // .basic-list-card: card-title + text block + CTA button (no image)
   if (element.matches('.basic-list-card')) {
+    const buildCard = (card) => {
+      const body = [];
+      const heading = card.querySelector('.card-title, h2, h3');
+      if (heading) body.push(clone(heading));
+      card.querySelectorAll('.content-container > div').forEach((div) => {
+        if (div.querySelector('.card-title, h2, h3')) return;
+        if (div.querySelector('a.btn')) return;
+        body.push(clone(div));
+      });
+      card.querySelectorAll('a.btn').forEach((a) => body.push(clone(a)));
+      return { image: null, body };
+    };
+    const siblings = gridSiblings(element, '.basic-list-card');
+    if (siblings) {
+      if (element !== siblings[0]) return;
+      emitGrid(siblings, buildCard);
+      return;
+    }
+    // Standalone: build from live nodes.
     const body = [];
     const heading = element.querySelector('.card-title, h2, h3');
     if (heading) body.push(heading);
-    // Text lives in .content-container > div blocks that are not the heading wrapper or the CTA.
     element.querySelectorAll('.content-container > div').forEach((div) => {
       if (div.querySelector('.card-title, h2, h3')) return;
       if (div.querySelector('a.btn')) return;
       body.push(div);
     });
     element.querySelectorAll('a.btn').forEach((a) => body.push(a));
-    cells.push(bodyCell(body, element));
+    pushCardRow(null, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
@@ -552,6 +633,24 @@ export default function parse(element, { document }) {
 
   // .shell-card: title + text + image (or kyruus search title-only variant)
   if (element.matches('.shell-card')) {
+    const buildCard = (card) => {
+      const imgNode = card.querySelector('.shell-card-image img, .icon-svg img, img');
+      const image = imgNode ? clone(imgNode) : null;
+      const body = collectBody(
+        card,
+        '.shell-card-title',
+        '.shell-card-text',
+        'a.btn',
+      ).map((n) => clone(n));
+      return { image, body };
+    };
+    const siblings = gridSiblings(element, '.shell-card');
+    if (siblings) {
+      if (element !== siblings[0]) return;
+      emitGrid(siblings, buildCard);
+      return;
+    }
+    // Standalone: build from live nodes.
     const image = element.querySelector('.shell-card-image img, .icon-svg img, img');
     const body = collectBody(
       element,
@@ -559,8 +658,7 @@ export default function parse(element, { document }) {
       '.shell-card-text',
       'a.btn',
     );
-    if (image) cells.push([image]);
-    cells.push(bodyCell(body, element));
+    pushCardRow(image, body, element);
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
     return;
@@ -570,6 +668,33 @@ export default function parse(element, { document }) {
   //   1) row form: .text-card-image img + nested .image-text-card-body body
   //   2) simple form: .card-body with optional heading, .card-text (may contain iframe)
   if (element.matches('.text-card')) {
+    const buildCard = (card) => {
+      const imgNode = card.querySelector('.text-card-image img');
+      const nestedBody = card.querySelector('.image-text-card-body');
+      if (imgNode && nestedBody) {
+        const body = collectBody(
+          nestedBody,
+          '.card-title',
+          '.card-text',
+          '.text-card-left-button a, a.btn',
+        ).map((n) => clone(n));
+        return { image: clone(imgNode), body };
+      }
+      const body = collectBody(
+        card,
+        '.card-body > h1, .card-body > h2, .card-body > h3, h3',
+        '.card-text, .card-body > p',
+        '.card-body a.btn',
+      ).map((n) => clone(n));
+      return { image: null, body };
+    };
+    const siblings = gridSiblings(element, '.text-card');
+    if (siblings) {
+      if (element !== siblings[0]) return;
+      emitGrid(siblings, buildCard);
+      return;
+    }
+    // Standalone: build from live nodes (no nesting concern for a top-level promo).
     const image = element.querySelector('.text-card-image img');
     const nestedBody = element.querySelector('.image-text-card-body');
     if (image && nestedBody) {
@@ -579,8 +704,7 @@ export default function parse(element, { document }) {
         '.card-text',
         '.text-card-left-button a, a.btn',
       );
-      cells.push([image]);
-      cells.push(bodyCell(body, nestedBody));
+      pushCardRow(image, body, nestedBody);
     } else {
       const body = collectBody(
         element,
@@ -588,7 +712,7 @@ export default function parse(element, { document }) {
         '.card-text, .card-body > p',
         '.card-body a.btn',
       );
-      cells.push(bodyCell(body, element));
+      pushCardRow(null, body, element);
     }
     const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
     element.replaceWith(block);
@@ -596,7 +720,7 @@ export default function parse(element, { document }) {
   }
 
   // Fallback: emit whatever the element contains as a single body cell.
-  cells.push([element]);
+  pushCardRow(null, [element], element);
   const block = WebImporter.Blocks.createBlock(document, { name: 'cards-feature', cells });
   element.replaceWith(block);
 }
