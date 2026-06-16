@@ -196,23 +196,6 @@ var CustomImportScript = (() => {
       });
       element.replaceWith(block2);
     };
-    if (element.matches(".text-card-feature-articles")) {
-      const articles = Array.from(element.querySelectorAll(".text-card-feature-article"));
-      articles.forEach((card) => {
-        const info = card.querySelector(":scope > .text-card-feature-article-info, .text-card-feature-article-info");
-        const img = resolveImage(card.querySelector(":scope > img, img"), card);
-        const body = articleBody(info || card, {
-          eyebrowSel: ".text-card-feature-article-eyebrow",
-          titleSel: ".text-card-feature-article-title a, a.text-card-feature-article-button",
-          dateSel: ".text-card-feature-article-date"
-        });
-        if (img || body.length) pushCardRow(img, body, card);
-      });
-      if (!cells.length) cells.push([[clone(element)]]);
-      const block2 = WebImporter.Blocks.createBlock(document, { name: "cards-feature", cells });
-      element.replaceWith(block2);
-      return;
-    }
     if (element.matches(".video-card-list")) {
       const heading = element.querySelector(".video-card-list-heading, h2");
       if (heading && hasContent(heading)) {
@@ -581,7 +564,12 @@ var CustomImportScript = (() => {
         ".aamIframeLoaded",
         // Dismissible global app-install promo widget (logo + INSTALL/Open),
         // not authorable page content. Verified in cleaned.html (line ~248).
-        "section.bh-app-mobile-download"
+        "section.bh-app-mobile-download",
+        // Analytics tracking pixels injected by the Kyruus "Find a Doctor" search
+        // widget (kloggyr-service.kyruus.com/api/log?data=...). They are 0-byte
+        // beacons, not real imagery; once imported they resolve to about:error.
+        'img[src*="kloggyr"]',
+        'img[src*="kyruus.com/api/log"]'
       ]);
     }
     if (hookName === TransformHook.afterTransform) {

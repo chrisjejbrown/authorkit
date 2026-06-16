@@ -34,6 +34,11 @@ export default function transform(hookName, element, payload) {
       // Dismissible global app-install promo widget (logo + INSTALL/Open),
       // not authorable page content. Verified in cleaned.html (line ~248).
       'section.bh-app-mobile-download',
+      // Analytics tracking pixels injected by the Kyruus "Find a Doctor" search
+      // widget (kloggyr-service.kyruus.com/api/log?data=...). They are 0-byte
+      // beacons, not real imagery; once imported they resolve to about:error.
+      'img[src*="kloggyr"]',
+      'img[src*="kyruus.com/api/log"]',
     ]);
   }
 
