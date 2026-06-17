@@ -4,16 +4,38 @@
 
 const DESKTOP_MIN = 992;
 
+// SVG logos must not pass through the picture/webply pipeline: on the published
+// site DA wraps the nav images in <picture> with an `image/webp` <source>, and
+// the SVG→webply rendition resolves to about:error (the browser commits to that
+// source and never falls back to the <img>). Collapse every <picture> to its
+// inner <img>, and resolve relative media paths (./media_* / images/*) to the
+// site root so the logo loads from any page depth.
+function normalizeNavMedia(root) {
+  root.querySelectorAll('picture').forEach((pic) => {
+    const img = pic.querySelector('img');
+    if (img) pic.replaceWith(img);
+    else pic.remove();
+  });
+  root.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src') || '';
+    if (src.startsWith('./')) img.setAttribute('src', `/${src.slice(2)}`);
+    else if (!/^(https?:)?\//.test(src)) img.setAttribute('src', `/${src}`);
+    img.removeAttribute('loading');
+  });
+}
+
 async function fetchNav() {
-  let resp = await fetch('/content/nav.plain.html');
-  if (!resp.ok) {
-    const navPath = '/nav';
-    resp = await fetch(`${navPath}.plain.html`);
-  }
+  // Published site serves the nav at the site root (/nav.plain.html); the local
+  // `aem up` dev server serves it from the content folder. Try the root path
+  // first so the published case does not log a /content 404 on every page.
+  let resp = await fetch('/nav.plain.html');
+  if (!resp.ok) resp = await fetch('/content/nav.plain.html');
   if (!resp.ok) return null;
   const html = await resp.text();
   const doc = new DOMParser().parseFromString(html, 'text/html');
-  return doc.querySelector('main') || doc.body;
+  const nav = doc.querySelector('main') || doc.body;
+  normalizeNavMedia(nav);
+  return nav;
 }
 
 function buildSearchButton() {
