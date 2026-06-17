@@ -61,6 +61,18 @@
   width: var(--slide-content-width, auto);
 }
 
+/* The slide content sits white-on-dark over the image, but links inside it
+   (the article title and category) otherwise pick up the global link color
+   and render dark/illegible. Keep them white. */
+.carousel .carousel-slide .carousel-slide-content a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.carousel .carousel-slide .carousel-slide-content a:hover {
+  text-decoration: underline;
+}
+
 .carousel .carousel-slide-indicators {
   display: flex;
   flex-wrap: wrap;
