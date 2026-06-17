@@ -25,6 +25,19 @@
   background-color: var(--background-color);
 }
 
+/* Cards whose icon is a white-only SVG are authored for the navy brand
+   background (source `bg-primary`); restore it so the white icon and text are
+   legible. Flagged by cards-feature.js (markWhiteIconCards). */
+.cards-feature > ul > li.cards-feature-card-invert {
+  background-color: #00205b;
+  border-color: #00205b;
+  color: #fff;
+}
+
+.cards-feature > ul > li.cards-feature-card-invert a {
+  color: #fff;
+}
+
 /* Single full-width promo/hero card: no card border, and — when it has both an
    image and a text body — lay them out side by side (text left on a tinted
    panel, image right) to match the source promo band. */
