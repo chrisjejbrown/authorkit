@@ -4,7 +4,20 @@ export function createPicture({ src, alt = '', eager = false, breakpoints = DEF_
   const url = !src.startsWith('http') ? new URL(src, window.location.href) : new URL(src);
   const picture = document.createElement('picture');
   const { origin, pathname } = url;
-  const ext = pathname.split('.').pop();
+  const ext = pathname.split('.').pop().toLowerCase();
+
+  // SVGs are already resolution-independent; routing them through the webply
+  // pipeline produces a broken rendition on the delivery host (the <source>
+  // resolves to about:error and the browser never falls back). Emit a plain
+  // <img> pointing at the SVG itself.
+  if (ext === 'svg') {
+    const img = document.createElement('img');
+    img.setAttribute('loading', eager ? 'eager' : 'lazy');
+    img.setAttribute('alt', alt);
+    img.setAttribute('src', `${origin}${pathname}`);
+    picture.appendChild(img);
+    return picture;
+  }
 
   // webp
   breakpoints.forEach((br) => {
