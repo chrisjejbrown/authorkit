@@ -24,18 +24,34 @@ function normalizeNavMedia(root) {
   });
 }
 
-async function fetchNav() {
-  // Published site serves the nav at the site root (/nav.plain.html); the local
-  // `aem up` dev server serves it from the content folder. Try the root path
-  // first so the published case does not log a /content 404 on every page.
-  let resp = await fetch('/nav.plain.html');
-  if (!resp.ok) resp = await fetch('/content/nav.plain.html');
-  if (!resp.ok) return null;
-  const html = await resp.text();
+// Pick the response whose <main>/<body> actually has nav content. Both the
+// local dev server (/content/nav.plain.html) and the published site
+// (/nav.plain.html) may answer 200, but only one carries the authored nav; the
+// other can be an empty placeholder, so choose by content.
+function navBody(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
-  const nav = doc.querySelector('main') || doc.body;
-  normalizeNavMedia(nav);
-  return nav;
+  return doc.querySelector('main') || doc.body;
+}
+
+async function fetchNav() {
+  const paths = ['/content/nav.plain.html', '/nav.plain.html'];
+  let chosen = null;
+  for (const path of paths) {
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await fetch(path);
+    if (resp.ok) {
+      // eslint-disable-next-line no-await-in-loop
+      const body = navBody(await resp.text());
+      if (body && body.querySelector('a, img')) {
+        chosen = body;
+        break;
+      }
+      if (body && !chosen) chosen = body;
+    }
+  }
+  if (!chosen) return null;
+  normalizeNavMedia(chosen);
+  return chosen;
 }
 
 function buildSearchButton() {
